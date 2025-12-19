@@ -22,6 +22,10 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { AdminProducts } from "./pages/admin/AdminProducts";
 import { ProductEditor } from "./pages/admin/ProductEditor";
 
+// S2PAS
+import { S2pasDashboard } from "./pages/S2pasDashboard.jsx";
+import { S2pasNavigator } from "./pages/S2pasNavigator.jsx";
+
 function Shell() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
@@ -69,9 +73,13 @@ function Shell() {
         {/* Common */}
         <Route path="/" element={<Dashboard />} />
 
+        {/* S2PAS (admin & agent boleh) */}
+        <Route path="/s2pas" element={<S2pasDashboard />} />
+        <Route path="/s2pas/nav" element={<S2pasNavigator />} />
+
         {/* Products (common) */}
         <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/products/:slugOrId" element={<ProductDetail />} />
 
         {/* Agent */}
         <Route path="/categories" element={<CategoriesView />} />
@@ -93,7 +101,6 @@ function Shell() {
             </RoleGuard>
           }
         />
-
         <Route
           path="/admin/products"
           element={

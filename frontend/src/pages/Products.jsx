@@ -144,7 +144,11 @@ export function Products() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <div>
               <div className="text-xs font-semibold text-slate-700">Main Category</div>
-              <select className="input mt-1" value={root} onChange={(e) => { setRoot(e.target.value); setLevels([""]); setPage(1); }}>
+              <select
+                className="input mt-1"
+                value={root}
+                onChange={(e) => { setRoot(e.target.value); setLevels([""]); setPage(1); }}
+              >
                 {mainOptions.map((x) => <option key={x} value={x}>{x}</option>)}
               </select>
             </div>
@@ -187,13 +191,15 @@ export function Products() {
           {items.map((p) => (
             <Link
               key={p.id}
-              to={`/products/${p.id}`}
+              to={`/products/${p.slug || p.id}`}
               className="block py-4 hover:bg-slate-50 rounded-2xl px-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-bold text-slate-900">{p.title}</div>
-                  <div className="mt-1 text-xs text-slate-500">Product #{p.id} • Category #{p.category_id}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Slug: <b>{p.slug}</b> • Category #{p.category_id}
+                  </div>
                 </div>
                 {p.is_breaking && (
                   <span className="rounded-full bg-bjb-gold/20 text-bjb-navy px-3 py-1 text-xs font-bold">
