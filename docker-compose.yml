@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: s2pas_postgres
+    environment:
+      POSTGRES_USER: s2pas
+      POSTGRES_PASSWORD: s2pas_password
+      POSTGRES_DB: s2pas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - s2pas_pgdata:/var/lib/postgresql/data
+
+volumes:
+  s2pas_pgdata:

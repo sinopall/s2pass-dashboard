@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-bjb-navy/10;
+  }
+  .btn-primary {
+    @apply rounded-2xl bg-bjb-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-95;
+  }
+  .btn-ghost {
+    @apply rounded-2xl px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100;
+  }
+   .tiptap-editor {
+    @apply min-h-[260px] rounded-2xl border border-slate-200 bg-white p-4 text-sm outline-none;
+  }
+  .tiptap-toolbar-btn {
+    @apply rounded-xl px-3 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200;
+  }
+  .tiptap-toolbar-btn-active {
+    @apply bg-bjb-navy text-white hover:bg-bjb-navy;
+  }
+
+  /* basic content styles */
+  .prose-tiptap table { @apply w-full border-collapse; }
+  .prose-tiptap th, .prose-tiptap td { @apply border border-slate-200 p-2; }
+  .prose-tiptap th { @apply bg-slate-50 text-left; }
+  .prose-tiptap ul { @apply list-disc pl-6; }
+  .prose-tiptap ol { @apply list-decimal pl-6; }
+  .prose-tiptap h1 { @apply text-2xl font-bold; }
+  .prose-tiptap h2 { @apply text-xl font-bold; }
+  .prose-tiptap h3 { @apply text-lg font-bold; }
+  .prose-tiptap blockquote { @apply border-l-4 border-slate-200 pl-4 text-slate-600; }
+  .prose-tiptap code { @apply rounded bg-slate-100 px-1 py-0.5; }
+  .prose-tiptap img { @apply max-w-full rounded-2xl border border-slate-200; }
+}
