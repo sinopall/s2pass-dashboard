@@ -8,9 +8,10 @@ import (
 type Product struct {
 	ID         int64           `json:"id"`
 	Title      string          `json:"title"`
+	Slug       string          `json:"slug"`
 	CategoryID int64           `json:"category_id"`
 	IsBreaking bool            `json:"is_breaking"`
-	Content    json.RawMessage `json:"content"` // IMPORTANT: raw JSON, bukan []byte base64
+	Content    json.RawMessage `json:"content"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 }

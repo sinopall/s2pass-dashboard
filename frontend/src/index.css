@@ -35,3 +35,8 @@
   .prose-tiptap code { @apply rounded bg-slate-100 px-1 py-0.5; }
   .prose-tiptap img { @apply max-w-full rounded-2xl border border-slate-200; }
 }
+
+/* hide scrollbar (chrome/edge/safari) */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+/* firefox */
+.scrollbar-hide { scrollbar-width: none; }

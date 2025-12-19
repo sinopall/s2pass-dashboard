@@ -42,13 +42,22 @@ func (h *ProductHandler) Breaking(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// ringan: FE cuma butuh id + title
 	c.JSON(http.StatusOK, items)
 }
 
 func (h *ProductHandler) Get(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 	p, err := h.svc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+	c.JSON(http.StatusOK, p)
+}
+
+func (h *ProductHandler) GetBySlugPublic(c *gin.Context) {
+	slug := c.Param("slug")
+	p, err := h.svc.GetBySlug(c.Request.Context(), slug)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
@@ -63,7 +72,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.Create(c.Request.Context(), req.Title, req.CategoryID, req.IsBreaking, req.Content)
+	p, err := h.svc.Create(c.Request.Context(), req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -80,7 +89,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.Update(c.Request.Context(), id, req.Title, req.CategoryID, req.IsBreaking, req.Content)
+	p, err := h.svc.Update(c.Request.Context(), id, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

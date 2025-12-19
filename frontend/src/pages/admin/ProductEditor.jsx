@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../../lib/api";
@@ -57,34 +57,42 @@ function norm(s) {
   return (s || "").trim().toLowerCase();
 }
 
+/** slugify FE (optional) — backend juga akan auto-generate */
+function slugify(str) {
+  return (str || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 /** ===== TipTap Extensions ===== */
 function editorExtensions() {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
+      underline: false,
+      link: false,
     }),
     Underline,
     TextStyle,
     Color,
     Highlight.configure({ multicolor: true }),
-    TextAlign.configure({
-      types: ["heading", "paragraph"],
-    }),
+    TextAlign.configure({ types: ["heading", "paragraph"] }),
     Link.configure({
       openOnClick: true,
       autolink: true,
       linkOnPaste: true,
     }),
-    Image.configure({
-      inline: false,
-      allowBase64: false, // kita pakai upload URL
-    }),
+    Image.configure({ inline: false, allowBase64: false }),
     Table.configure({ resizable: true }),
     TableRow,
     TableHeader,
     TableCell,
   ];
 }
+
 
 /** ===== Icon Button ===== */
 function IconBtn({ title, onClick, active, disabled, children }) {
@@ -274,7 +282,7 @@ function EditorToolbar({ editor, onUploadImage, onUploadFile }) {
 }
 
 /** ===== TipTap Editor wrapper ===== */
-function TipTap({ valueHtml, onChangeHtml, onUploadImageUrl, onUploadFileUrl }) {
+function TipTap({ valueHtml, onChangeHtml }) {
   const editor = useEditor({
     extensions: editorExtensions(),
     content: valueHtml || "",
@@ -284,43 +292,54 @@ function TipTap({ valueHtml, onChangeHtml, onUploadImageUrl, onUploadFileUrl }) 
     },
   });
 
-  // sync external -> editor (edit load)
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
     if ((valueHtml || "") !== (current || "")) editor.commands.setContent(valueHtml || "", false);
   }, [valueHtml, editor]);
 
-  // upload helpers (insert into editor)
+  function toAbsoluteUrl(url) {
+    const origin = import.meta.env.VITE_API_ORIGIN || "http://localhost:8080";
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `${origin}${url}`;
+  }
+
   async function upload(kind) {
+    if (!editor) return;
+
     const accept = kind === "image" ? "image/*" : ".pdf";
     const input = document.createElement("input");
     input.type = "file";
     input.accept = accept;
+
     input.onchange = async () => {
       const f = input.files?.[0];
       if (!f) return;
 
-      const fd = new FormData();
-      fd.append("file", f);
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
 
-      const res = await api.post("/uploads", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+        const res = await api.post("/uploads", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
 
-      const { url, name, ext } = res.data || {};
-      if (!url) return;
+        const { url, name } = res.data || {};
+        const absoluteUrl = toAbsoluteUrl(url);
+        if (!absoluteUrl) return;
 
-      // insert
-      if (kind === "image") {
-        editor.chain().focus().setImage({ src: url }).run();
-        onUploadImageUrl?.(url);
-      } else {
-        // PDF link
-        editor.chain().focus().setLink({ href: url }).insertContent(name || "Attachment").unsetLink().run();
-        onUploadFileUrl?.(url);
+        if (kind === "image") {
+          editor.chain().focus().setImage({ src: absoluteUrl }).run();
+        } else {
+          editor.chain().focus().setLink({ href: absoluteUrl }).insertContent(name || "Attachment").unsetLink().run();
+        }
+      } catch (e) {
+        console.error(e);
+        alert(e?.response?.data?.error || "Upload gagal");
       }
     };
+
     input.click();
   }
 
@@ -341,7 +360,11 @@ function AccordionCard({ idx, item, onToggle, open, onRemove, onTitleChange, onB
   return (
     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
       <div className="flex items-center gap-2 p-3 bg-slate-50 border-b border-slate-200">
-        <button type="button" onClick={onToggle} className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center"
+        >
           {open ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </button>
 
@@ -349,14 +372,14 @@ function AccordionCard({ idx, item, onToggle, open, onRemove, onTitleChange, onB
           className="input flex-1"
           value={item.title}
           onChange={(e) => onTitleChange(e.target.value)}
-          placeholder={`Judul section #${idx + 1} (contoh: Jika Status Active)`}
+          placeholder={`Judul accordion #${idx + 1} (contoh: Jika Status Active)`}
         />
 
         <button
           type="button"
           onClick={onRemove}
           className="h-9 w-9 rounded-xl bg-red-50 text-red-700 border border-red-100 flex items-center justify-center hover:bg-red-100"
-          title="Remove section"
+          title="Remove accordion"
         >
           <X size={18} />
         </button>
@@ -380,17 +403,19 @@ export function ProductEditor({ mode }) {
   const mainOptions = useMemo(() => ["Informasi", "Request", "Complaint"], []);
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState(""); // optional, backend auto
   const [isBreaking, setIsBreaking] = useState(false);
 
   // categories
   const [roots, setRoots] = useState([]);
   const [root, setRoot] = useState("Informasi");
-  const [levels, setLevels] = useState([""]); // sub1..n
+  const [levels, setLevels] = useState([""]);
   const [options, setOptions] = useState({});
   const [categoryId, setCategoryId] = useState(0);
 
-  // accordions only
-  const [accordions, setAccordions] = useState([{ title: "", body_html: "" }]);
+  // tabs -> accordions
+  const [tabs, setTabs] = useState([{ title: "Default", accordions: [{ title: "", body_html: "" }] }]);
+  const [activeTab, setActiveTab] = useState(0);
   const [openIdx, setOpenIdx] = useState(0);
 
   const [saving, setSaving] = useState(false);
@@ -446,8 +471,7 @@ export function ProductEditor({ mode }) {
 
     if (!roots.length) return;
     run().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, levels, roots]);
+  }, [root, levels, roots]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // edit load
   useEffect(() => {
@@ -458,21 +482,35 @@ export function ProductEditor({ mode }) {
         const p = res.data;
 
         setTitle(p.title || "");
+        setSlug(p.slug || "");
         setIsBreaking(!!p.is_breaking);
 
-        // content already JSON object (after backend fix to json.RawMessage)
         const content = p.content || {};
-        const acc = Array.isArray(content.accordions) ? content.accordions : [];
-        setAccordions(acc.length ? acc : [{ title: "", body_html: "" }]);
+        const loadedTabs = Array.isArray(content.tabs) ? content.tabs : null;
+
+        if (loadedTabs && loadedTabs.length) {
+          setTabs(
+            loadedTabs.map((t) => ({
+              title: t.title || "Tab",
+              accordions: Array.isArray(t.accordions) ? t.accordions : [{ title: "", body_html: "" }],
+            }))
+          );
+        } else {
+          // fallback legacy
+          const acc = Array.isArray(content.accordions) ? content.accordions : [];
+          setTabs([{ title: "Default", accordions: acc.length ? acc : [{ title: "", body_html: "" }] }]);
+        }
+
+        setActiveTab(0);
+        setOpenIdx(0);
 
         // prefill category chain
         if (p.category_id) {
           const pathRes = await api.get("/categories/path", { params: { leafId: p.category_id } });
-          const path = pathRes.data || []; // [{id,name,level...}] root->leaf
+          const path = pathRes.data || [];
           if (path.length >= 2) {
             setRoot(path[0].name);
             setLevels(path.slice(1).map((x) => x.name));
-            setOpenIdx(0);
           }
         }
       } catch (e) {
@@ -498,39 +536,77 @@ export function ProductEditor({ mode }) {
     setLevels((p) => (p.length <= 1 ? p : p.slice(0, p.length - 1)));
   }
 
-  function addAccordion() {
-    setAccordions((p) => [...p, { title: "", body_html: "" }]);
-    setOpenIdx(accordions.length);
+  /** ===== TAB actions ===== */
+  function addTab() {
+    setTabs((prev) => [...prev, { title: `Tab ${prev.length + 1}`, accordions: [{ title: "", body_html: "" }] }]);
+    setActiveTab(tabs.length);
+    setOpenIdx(0);
   }
 
-  function updateAcc(i, patch) {
-    setAccordions((p) => p.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
+  function renameTab(idx, newTitle) {
+    setTabs((prev) => prev.map((t, i) => (i === idx ? { ...t, title: newTitle } : t)));
   }
 
-  function removeAcc(i) {
-    setAccordions((p) => {
-      const next = p.filter((_, idx) => idx !== i);
-      if (next.length === 0) return [{ title: "", body_html: "" }];
-      return next;
+  function removeTab(idx) {
+    setTabs((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      return next.length ? next : [{ title: "Default", accordions: [{ title: "", body_html: "" }] }];
     });
-    setOpenIdx((prev) => (prev === i ? 0 : prev));
+    setActiveTab((prev) => (prev === idx ? 0 : prev > idx ? prev - 1 : prev));
+    setOpenIdx(0);
+  }
+
+  /** ===== ACCORDION actions (on active tab) ===== */
+  function addAccordion() {
+    setTabs((prev) =>
+      prev.map((t, i) => {
+        if (i !== activeTab) return t;
+        return { ...t, accordions: [...t.accordions, { title: "", body_html: "" }] };
+      })
+    );
+    setOpenIdx((prev) => prev + 1);
+  }
+
+  function updateAcc(accIdx, patch) {
+    setTabs((prev) =>
+      prev.map((t, i) => {
+        if (i !== activeTab) return t;
+        return { ...t, accordions: t.accordions.map((a, j) => (j === accIdx ? { ...a, ...patch } : a)) };
+      })
+    );
+  }
+
+  function removeAcc(accIdx) {
+    setTabs((prev) =>
+      prev.map((t, i) => {
+        if (i !== activeTab) return t;
+        const nextAcc = t.accordions.filter((_, j) => j !== accIdx);
+        return { ...t, accordions: nextAcc.length ? nextAcc : [{ title: "", body_html: "" }] };
+      })
+    );
+    setOpenIdx((prev) => (prev === accIdx ? 0 : prev));
   }
 
   async function save() {
-    if (!title.trim()) return toast.error("Validasi", "Judul wajib diisi");
+    const t = title.trim();
+    if (!t) return toast.error("Validasi", "Judul wajib diisi");
     if (!categoryId || categoryId <= 0) return toast.error("Validasi", "Pilih category existing sampai leaf (wajib)");
 
-    // validate accordion
-    for (const a of accordions) {
-      if (!a.title?.trim()) return toast.error("Validasi", "Judul accordion tidak boleh kosong");
-      if (!a.body_html?.trim()) return toast.error("Validasi", "Konten accordion tidak boleh kosong");
+    // validate all tabs/accordions
+    for (const tab of tabs) {
+      if (!tab.title?.trim()) return toast.error("Validasi", "Judul tab tidak boleh kosong");
+      for (const a of tab.accordions || []) {
+        if (!a.title?.trim()) return toast.error("Validasi", "Judul accordion tidak boleh kosong");
+        if (!a.body_html?.trim()) return toast.error("Validasi", "Konten accordion tidak boleh kosong");
+      }
     }
 
     const payload = {
-      title: title.trim(),
+      title: t,
+      slug: slug.trim() ? slugify(slug.trim()) : "", // optional
       category_id: categoryId,
       is_breaking: isBreaking,
-      content: { accordions },
+      content: { tabs },
     };
 
     try {
@@ -552,15 +628,13 @@ export function ProductEditor({ mode }) {
 
   return (
     <div className="space-y-5 pb-24">
-      {/* Header card */}
+      {/* Header */}
       <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-lg font-bold text-slate-900">
-              {mode === "edit" ? "Edit Product" : "Create Product"}
-            </div>
+            <div className="text-lg font-bold text-slate-900">{mode === "edit" ? "Edit Product" : "Create Product"}</div>
             <div className="mt-1 text-sm text-slate-500">
-              Editor ala Word: icon toolbar, warna, highlight, tabel merge/split, upload image & PDF. Semua konten di accordion.
+              Tab → Accordion. Editor ala Word (TipTap full): warna, highlight, tabel merge/split, upload image & PDF.
             </div>
           </div>
 
@@ -578,15 +652,23 @@ export function ProductEditor({ mode }) {
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="md:col-span-2">
             <div className="text-xs font-semibold text-slate-700">Judul</div>
-            <input
-              className="input mt-1"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Reset DIGI - Jika Status Active"
-            />
+            <input className="input mt-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Kredit Ghuna Bhakti" />
           </div>
 
-          <div className="flex items-center gap-3 mt-6 md:mt-0">
+          <div className="md:col-span-1">
+            <div className="text-xs font-semibold text-slate-700">Slug (optional)</div>
+            <input
+              className="input mt-1"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder="kredit-ghuna-bhakti"
+            />
+            <div className="mt-1 text-[11px] text-slate-500">
+              Kalau kosong, backend akan auto-generate dari judul.
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 md:col-span-3">
             <input type="checkbox" checked={isBreaking} onChange={(e) => setIsBreaking(e.target.checked)} />
             <div className="text-sm font-semibold text-slate-900">Breaking News</div>
           </div>
@@ -636,7 +718,9 @@ export function ProductEditor({ mode }) {
 
           <div className="mt-3 flex gap-2 flex-wrap items-center">
             <button type="button" className="btn-ghost bg-white border border-slate-200" onClick={addLevel}>
-              <span className="inline-flex items-center gap-2"><Plus size={16}/> tambah level</span>
+              <span className="inline-flex items-center gap-2">
+                <Plus size={16} /> tambah level
+              </span>
             </button>
             <button type="button" className="btn-ghost bg-white border border-slate-200" onClick={removeLastLevel}>
               hapus level
@@ -648,12 +732,49 @@ export function ProductEditor({ mode }) {
         </div>
       </div>
 
-      {/* Accordions */}
+      {/* Tabs */}
+      <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-lg font-bold text-slate-900">Tabs</div>
+            <div className="text-sm text-slate-500 mt-1">Satu product punya banyak tab. Tiap tab berisi accordion.</div>
+          </div>
+          <button type="button" className="btn-primary" onClick={addTab}>
+            + Add Tab
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {tabs.map((t, i) => {
+            const active = i === activeTab;
+            return (
+              <div key={i} className={["rounded-2xl border px-3 py-2 flex items-center gap-2", active ? "bg-bjb-navy text-white border-bjb-navy" : "bg-white border-slate-200"].join(" ")}>
+                <button type="button" onClick={() => { setActiveTab(i); setOpenIdx(0); }} className="text-sm font-semibold">
+                  {t.title || `Tab ${i + 1}`}
+                </button>
+                <input
+                  className={["ml-2 rounded-xl px-2 py-1 text-xs", active ? "text-slate-900" : "bg-slate-50 border border-slate-200"].join(" ")}
+                  value={t.title}
+                  onChange={(e) => renameTab(i, e.target.value)}
+                  placeholder="Nama tab"
+                />
+                {tabs.length > 1 && (
+                  <button type="button" onClick={() => removeTab(i)} className={["h-7 w-7 rounded-lg flex items-center justify-center", active ? "bg-white/15" : "bg-red-50"].join(" ")}>
+                    <X size={14} className={active ? "text-white" : "text-red-700"} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Accordions (active tab) */}
       <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold text-slate-900">Accordion Sections</div>
-            <div className="text-sm text-slate-500 mt-1">Semua konten product disimpan di section ini.</div>
+            <div className="text-lg font-bold text-slate-900">Accordion Sections — {tabs[activeTab]?.title || "Tab"}</div>
+            <div className="text-sm text-slate-500 mt-1">Konten ada di accordion (pakai TipTap full).</div>
           </div>
           <button type="button" className="btn-primary" onClick={addAccordion}>
             + Add Section
@@ -661,7 +782,7 @@ export function ProductEditor({ mode }) {
         </div>
 
         <div className="mt-5 space-y-4">
-          {accordions.map((a, idx) => (
+          {(tabs[activeTab]?.accordions || []).map((a, idx) => (
             <AccordionCard
               key={idx}
               idx={idx}

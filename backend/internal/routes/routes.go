@@ -27,6 +27,8 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	productSvc := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productSvc)
 
+	uploadH := handlers.NewUploadHandler()
+
 	api := r.Group("/api")
 
 	// Public
@@ -36,6 +38,7 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	protected := api.Group("")
 	protected.Use(middlewares.AuthMiddleware(cfg.JWTSecret))
 	protected.GET("/auth/me", authH.Me)
+	protected.POST("/uploads", uploadH.Upload)
 
 	// Admin only
 	admin := protected.Group("")
@@ -58,10 +61,11 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	// public
 	// public product
 	api.GET("/products", productHandler.List)
-	api.GET("/products/:id", productHandler.Get)
 	api.GET("/products/breaking", productHandler.Breaking)
+	api.GET("/products/:id", productHandler.Get)
+	api.GET("/public/:slug", productHandler.GetBySlugPublic)
 
-	// admin product (already protected + require admin)
+	// protected write (minimal)
 	admin.POST("/products", productHandler.Create)
 	admin.PUT("/products/:id", productHandler.Update)
 	admin.DELETE("/products/:id", productHandler.Delete)
