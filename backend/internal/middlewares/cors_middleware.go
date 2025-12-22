@@ -7,7 +7,12 @@ func CORSMiddleware() gin.HandlerFunc {
 		origin := c.GetHeader("Origin")
 
 		// dev: allow vite
-		if origin == "http://localhost:5173" {
+
+		allowedOrigins := map[string]bool{
+			"http://localhost:5173": true,
+			"http://localhost:5174": true,
+		}
+		if allowedOrigins[origin] {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Vary", "Origin")
 		}

@@ -16,5 +16,5 @@ type CategoryNode struct {
 	Name     string         `json:"name"`
 	ParentID *int64         `json:"parent_id"`
 	Level    int            `json:"level"`
-	Children []CategoryNode `json:"children"`
+	Children []*CategoryNode `json:"children"`
 }

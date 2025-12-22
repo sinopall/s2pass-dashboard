@@ -21,7 +21,7 @@ func NewCategoryService(db *pgxpool.Pool, repo *repositories.CategoryRepo) *Cate
 	return &CategoryService{db: db, repo: repo}
 }
 
-func (s *CategoryService) Tree(ctx context.Context) ([]models.CategoryNode, error) {
+func (s *CategoryService) Tree(ctx context.Context) ([]*models.CategoryNode, error) {
 	all, err := s.repo.ListAll(ctx)
 	if err != nil {
 		return nil, err
@@ -29,15 +29,16 @@ func (s *CategoryService) Tree(ctx context.Context) ([]models.CategoryNode, erro
 
 	// build map id->node
 	nodes := make(map[int64]*models.CategoryNode, len(all))
-	var roots []*models.CategoryNode
 
 	for _, c := range all {
 		n := &models.CategoryNode{
 			ID: c.ID, Name: c.Name, ParentID: c.ParentID, Level: c.Level,
-			Children: []models.CategoryNode{},
+			Children: []*models.CategoryNode{},
 		}
 		nodes[c.ID] = n
 	}
+
+	var roots []*models.CategoryNode
 
 	for _, c := range all {
 		n := nodes[c.ID]
@@ -46,16 +47,12 @@ func (s *CategoryService) Tree(ctx context.Context) ([]models.CategoryNode, erro
 		} else {
 			parent := nodes[*c.ParentID]
 			if parent != nil {
-				parent.Children = append(parent.Children, *n)
+				parent.Children = append(parent.Children, n)
 			}
 		}
 	}
 
-	out := make([]models.CategoryNode, 0, len(roots))
-	for _, r := range roots {
-		out = append(out, *r)
-	}
-	return out, nil
+	return roots, nil
 }
 
 func (s *CategoryService) Children(ctx context.Context, parentID int64) ([]models.Category, error) {
