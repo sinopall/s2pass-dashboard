@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -19,10 +21,25 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import CategoryPage from "./pages/Services/Category/CategoryPage";
+import ProductPage from "./pages/Services/Product/ProductPage";
+import CreateProduct from "./pages/Services/Product/CreateProduct";
 
 export default function App() {
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        style={{ zIndex: 999999 }}
+      />
       <Router>
         <ScrollToTop />
         <Routes>
@@ -32,6 +49,9 @@ export default function App() {
 
             {/* Others Page */}
             <Route path="/services/categories" element={<CategoryPage />} />
+            <Route path="/services/products" element={<ProductPage />} />
+            <Route path="/services/products/create" element={<CreateProduct />} />
+            <Route path="/services/products/edit/:id" element={<CreateProduct />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />

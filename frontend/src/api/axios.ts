@@ -20,9 +20,15 @@ apiInstance.interceptors.request.use((config) => {
 apiInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Opsional: Handle logout jika 401
-    if (error.response?.status === 401) {
-       // logic logout / clear storage
+    if (error.response && error.response.status === 401) {
+      const requestUrl = error.config.url;
+      if (requestUrl && requestUrl.includes("login")) {
+         return Promise.reject(error);
+      }
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user_data");
+      window.location.href = "/signin";
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }

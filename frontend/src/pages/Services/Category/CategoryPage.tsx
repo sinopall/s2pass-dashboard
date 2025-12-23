@@ -51,7 +51,7 @@ export default function CategoryPage() {
       console.log("Sending Payload:", payload); // Debugging
 
       // POST Request
-      const response = await axios.post(API.categories.createPath, payload);
+      const response = await axios.post(API.categories.path, payload);
 
       if (response.status === 200 || response.status === 201) {
         setSuccessMessage("Kategori berhasil disimpan!");

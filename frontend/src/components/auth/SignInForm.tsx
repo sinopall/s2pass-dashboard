@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { toast } from "react-toastify";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
@@ -42,28 +43,35 @@ export default function SignInForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await axios.post(API.login, {
+    const loginPromise = axios.post(API.auth.login, {
         username: username,
         password: password
-      });
+    });
 
+    try {
+      const response = await toast.promise(
+        loginPromise,
+        {
+          pending: 'Sedang masuk...',
+          success: 'Login berhasil!',
+          error: {
+            render({ data }: any) {
+              return data.response?.data?.message || "Username atau password salah";
+            }
+          }
+        }
+      );
       const { access_token, user } = response.data;
-      
       if (access_token) {
         localStorage.setItem("access_token", access_token);
         localStorage.setItem("user_data", JSON.stringify(user));
         navigate("/"); 
       } else {
-        setError("Token tidak diterima dari server.");
+        toast.error("Token tidak diterima dari server.");
       }
 
     } catch (err: any) {
       console.error("Login Error:", err);
-      const serverMessage = err.response?.data?.message;
-      setError(serverMessage || "Username atau password salah");
     } finally {
       setIsLoading(false);
     }

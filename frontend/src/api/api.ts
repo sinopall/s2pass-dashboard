@@ -1,8 +1,15 @@
 export default {
-  login: '/auth/login',
+  auth: {
+    me: '/auth/me',
+    login: '/auth/login',
+  },
   categories: {
     tree: '/categories/tree',
     children: '/categories/children',
-    createPath: '/categories/path',
+    path: '/categories/path',
+  },
+  products: {
+    list: '/products', 
+    detail: (id: number) => `/products/${id}`,
   }
 };
