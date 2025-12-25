@@ -23,6 +23,7 @@ import Home from "./pages/Dashboard/Home";
 import CategoryPage from "./pages/Services/Category/CategoryPage";
 import ProductPage from "./pages/Services/Product/ProductPage";
 import CreateProduct from "./pages/Services/Product/CreateProduct";
+import ProductDetail from "./pages/Services/Product/ProductDetail";
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/services/products" element={<ProductPage />} />
             <Route path="/services/products/create" element={<CreateProduct />} />
             <Route path="/services/products/edit/:id" element={<CreateProduct />} />
+            <Route path="/services/products/view/:id" element={<ProductDetail />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />

@@ -19,6 +19,20 @@ interface Product {
   updated_at: string;
 }
 
+const EyeIcon = ({ className = "" }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    strokeWidth={1.5} 
+    stroke="currentColor" 
+    className={className}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
 export default function ProductPage() {
   const navigate = useNavigate();
 
@@ -255,6 +269,13 @@ export default function ProductPage() {
                       </td>
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                         <div className="flex items-center justify-end gap-2 pr-4">
+                          <button 
+                            onClick={() => navigate(`/services/products/view/${item.id}`)}
+                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
+                            title="Lihat Detail"
+                          >
+                            <EyeIcon className="w-5 h-5"/>
+                          </button>
                           <button 
                              onClick={() => navigate(`/services/products/edit/${item.id}`)}
                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
