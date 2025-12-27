@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     subItems: [
       { name: "Kategori", path: "/services/categories", pro: false },
-      { name: "Produk", path: "/services/products", pro: false },
+      { name: "Knowledge Base", path: "/knowledge-base", pro: false },
     ],
   },
   {

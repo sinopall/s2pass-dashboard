@@ -27,6 +27,10 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	productSvc := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productSvc)
 
+	scriptRepo := repositories.NewScriptRepository(db)
+    scriptSvc := services.NewScriptService(scriptRepo)
+    scriptHandler := handlers.NewScriptHandler(scriptSvc)
+
 	uploadH := handlers.NewUploadHandler()
 
 	api := r.Group("/api")
@@ -65,9 +69,17 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	api.GET("/products/:id", productHandler.Get)
 	api.GET("/public/:slug", productHandler.GetBySlugPublic)
 
-	// protected write (minimal)
+	// protected product
 	admin.POST("/products", productHandler.Create)
 	admin.PUT("/products/:id", productHandler.Update)
 	admin.DELETE("/products/:id", productHandler.Delete)
 
+	// public script
+	api.GET("/scripts", scriptHandler.List)
+    api.GET("/scripts/:id", scriptHandler.Get)
+	
+	// protected script
+	admin.POST("/scripts", scriptHandler.Create)
+	admin.PUT("/scripts/:id", scriptHandler.Update) 
+    admin.DELETE("/scripts/:id", scriptHandler.Delete)
 }

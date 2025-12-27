@@ -11,5 +11,9 @@ export default {
   products: {
     list: '/products', 
     detail: (id: number) => `/products/${id}`,
+  },
+  scripts: {
+    list: "/scripts",
+    detail: (id: number) => `/scripts/${id}`,
   }
 };

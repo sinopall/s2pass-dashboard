@@ -21,9 +21,11 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import CategoryPage from "./pages/Services/Category/CategoryPage";
-import ProductPage from "./pages/Services/Product/ProductPage";
 import CreateProduct from "./pages/Services/Product/CreateProduct";
 import ProductDetail from "./pages/Services/Product/ProductDetail";
+import KnowledgeBasePage from "./pages/Services/KnowledgeBase/KnowledgeBasePage";
+import CreateScript from "./pages/Services/Script/CreateScript";
+import ScriptDetail from "./pages/Services/Script/ScriptDetail";
 
 export default function App() {
   return (
@@ -49,11 +51,17 @@ export default function App() {
             <Route index path="/" element={<Home />} />
 
             {/* Others Page */}
+            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/services/categories" element={<CategoryPage />} />
-            <Route path="/services/products" element={<ProductPage />} />
-            <Route path="/services/products/create" element={<CreateProduct />} />
-            <Route path="/services/products/edit/:id" element={<CreateProduct />} />
-            <Route path="/services/products/view/:id" element={<ProductDetail />} />
+            {/* 2. CRUD PRODUCT Routes */}
+            <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
+            <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
+            {/* Pastikan ProductDetail juga diupdate breadcrumb/navigasinya jika perlu */}
+            <Route path="/knowledge-base/products/view/:id" element={<ProductDetail />} /> 
+            {/* 3. CRUD SCRIPT Routes (Baru) */}
+            <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
+            <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
+            <Route path="/knowledge-base/scripts/view/:id" element={<ScriptDetail />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />

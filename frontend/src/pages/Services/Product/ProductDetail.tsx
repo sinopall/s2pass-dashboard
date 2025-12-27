@@ -63,7 +63,7 @@ export default function ProductDetail() {
               </div>
               <div className="flex gap-3">
                  <Button variant="outline" onClick={() => navigate(-1)}>Kembali</Button>
-                 <Button onClick={() => navigate(`/services/products/edit/${product.id}`)}>
+                 <Button onClick={() => navigate(`/knowledge-base/products/edit/${product.id}`)}>
                     <PencilIcon className="w-4 h-4 mr-2"/> Edit Produk
                  </Button>
               </div>
