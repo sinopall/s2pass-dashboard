@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"strconv"
 
 	"s2pas-backend/internal/dto"
@@ -21,12 +22,24 @@ func NewUserHandler(svc *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) List(c *gin.Context) {
-	users, err := h.svc.List(c.Request.Context())
+	var q dto.UserListQuery
+	if err := c.ShouldBindQuery(&q); err != nil {}
+	
+	if q.Page == 0 { q.Page = 1 }
+	if q.Limit == 0 { q.Limit = 10 }
+
+	users, total, err := h.svc.List(c.Request.Context(), q.Q, q.Role, q.Page, q.Limit)
 	if err != nil {
-		utils.JSONError(c, 500, "failed to list users")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list users"})
 		return
 	}
-	c.JSON(200, users)
+
+	c.JSON(http.StatusOK, gin.H{
+		"items": users,
+		"total": total,
+		"page":  q.Page,
+		"limit": q.Limit,
+	})
 }
 
 func (h *UserHandler) Create(c *gin.Context) {

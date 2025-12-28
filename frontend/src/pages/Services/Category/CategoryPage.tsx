@@ -157,7 +157,7 @@ export default function CategoryPage() {
                     Tipe
                   </th>
                   <th className="py-4 px-4 font-medium text-black dark:text-white text-right">
-                    Actions
+                    Aksi
                   </th>
                 </tr>
               </thead>

@@ -13,8 +13,8 @@ type UserService struct{ repo *repositories.UserRepo }
 
 func NewUserService(repo *repositories.UserRepo) *UserService { return &UserService{repo: repo} }
 
-func (s *UserService) List(ctx context.Context) ([]models.User, error) {
-	return s.repo.List(ctx)
+func (s *UserService) List(ctx context.Context, q, role string, page, limit int) ([]models.User, int, error) {
+	return s.repo.List(ctx, q, role, page, limit)
 }
 
 func (s *UserService) CreateAgent(ctx context.Context, username, password string) (*models.User, error) {

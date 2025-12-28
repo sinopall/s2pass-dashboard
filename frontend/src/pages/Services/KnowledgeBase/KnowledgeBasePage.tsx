@@ -35,7 +35,7 @@ export default function KnowledgeBasePage() {
             activeTab === 'script' ? 'border-primary text-primary' : 'border-transparent text-gray-500'
           }`}
         >
-          Script CS
+          Script Agent
         </button>
       </div>
 

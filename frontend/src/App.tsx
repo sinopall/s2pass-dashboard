@@ -4,19 +4,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
@@ -26,13 +13,15 @@ import ProductDetail from "./pages/Services/Product/ProductDetail";
 import KnowledgeBasePage from "./pages/Services/KnowledgeBase/KnowledgeBasePage";
 import CreateScript from "./pages/Services/Script/CreateScript";
 import ScriptDetail from "./pages/Services/Script/ScriptDetail";
+import UserList from "./pages/User/UserList";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function App() {
   return (
     <>
       <ToastContainer
         position="top-right"
-        autoClose={1000}
+        autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
@@ -46,50 +35,39 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
+            
+            {/* 1. PUBLIC ACCESS (Untuk Agent & Admin) */}
             <Route index path="/" element={<Home />} />
-
-            {/* Others Page */}
             <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/services/categories" element={<CategoryPage />} />
-            {/* 2. CRUD PRODUCT Routes */}
-            <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
-            <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
-            {/* Pastikan ProductDetail juga diupdate breadcrumb/navigasinya jika perlu */}
             <Route path="/knowledge-base/products/view/:id" element={<ProductDetail />} /> 
-            {/* 3. CRUD SCRIPT Routes (Baru) */}
-            <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
-            <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
             <Route path="/knowledge-base/scripts/view/:id" element={<ScriptDetail />} />
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
 
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
 
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+            {/* 2. ADMIN ONLY ACCESS (Restricted) */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                
+                {/* User Management */}
+                <Route path="/user-management" element={<UserList />} />
+                
+                {/* Write Access Product */}
+                <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
+                <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
+                
+                {/* Write Access Script */}
+                <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
+                <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
+            
+            </Route>
 
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
           </Route>
 
-          {/* Auth Layout */}
+          {/* --- AUTH LAYOUT --- */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
 
-          {/* Fallback Route */}
+          {/* --- FALLBACK --- */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

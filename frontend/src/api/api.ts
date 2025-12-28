@@ -15,5 +15,9 @@ export default {
   scripts: {
     list: "/scripts",
     detail: (id: number) => `/scripts/${id}`,
+  },
+  users: {
+    list: "/users",
+    detail: (id: number) => `/users/${id}`,
   }
 };
