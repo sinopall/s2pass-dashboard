@@ -1,15 +1,17 @@
 export default {
   auth: {
-    me: '/auth/me',
-    login: '/auth/login',
+    me: "/auth/me",
+    login: "/auth/login",
   },
   categories: {
-    tree: '/categories/tree',
-    children: '/categories/children',
-    path: '/categories/path',
+    tree: "/categories/tree",
+    children: "/categories/children",
+    path: "/categories/path",
+    rename: (id: number) => `/categories/${id}`,
+    delete: (id: number) => `/categories/${id}`,
   },
   products: {
-    list: '/products', 
+    list: "/products",
     detail: (id: number) => `/products/${id}`,
   },
   scripts: {

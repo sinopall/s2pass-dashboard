@@ -1,69 +1,133 @@
 import { useEffect, useState } from "react";
 import PageMeta from "../../../components/common/PageMeta";
-import PageBreadcrumb from "../../../components/common/PageBreadCrumb"; 
-import Button from "../../../components/ui/button/Button"; 
+import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import Button from "../../../components/ui/button/Button";
 import CategoryTableItem from "./CategoryTableItem";
 import { Category } from "./types";
-import { PlusIcon } from "../../../icons"; 
+import { PlusIcon } from "../../../icons";
 import axios from "../../../api/axios";
 import API from "../../../api/api";
 import Alert from "../../../components/ui/alert/Alert";
 import CategoryFormModal from "./CategoryFormModal";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+
+type ModalMode = "create" | "edit";
 
 export default function CategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [modalParentData, setModalParentData] = useState<Category | null>(null);
   const [modalRootType, setModalRootType] = useState("Informasi");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [modalAncestors, setModalAncestors] = useState<Category[]>([]);
 
-  // HANDLER: Saat tombol (+) diklik
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // delete modal state
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // HANDLER: Saat tombol (+) diklik (CREATE CHILD)
   const handleAddChild = (parent: Category, rootType: string, ancestors: Category[]) => {
-    setModalParentData(parent); // Simpan data parent
-    setModalRootType(rootType); // Simpan root type (Informasi/Request/etc)
+    setModalMode("create");
+    setModalParentData(parent);
+    setModalRootType(rootType);
     setModalAncestors(ancestors);
     setIsModalOpen(true);
   };
 
-  // HANDLER: Saat tombol "Tambah Kategori Utama" diklik
+  // HANDLER: Saat tombol "Tambah Kategori Utama" diklik (CREATE ROOT)
   const handleAddRoot = () => {
+    setModalMode("create");
     setModalParentData(null);
-    setModalRootType("Informasi"); // Default
+    setModalRootType("Informasi");
     setModalAncestors([]);
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = async (fullPath: string[]) => {
+  // HANDLER: EDIT CLICK
+  const handleEdit = (category: Category, rootType: string, ancestors: Category[]) => {
+    setModalMode("edit");
+    setModalParentData(category); // target rename
+    setModalRootType(rootType);   // tipe root
+    setModalAncestors(ancestors); // path ancestors dari table recursion
+    setIsModalOpen(true);
+  };
+
+  // HANDLER: DELETE CLICK
+  const handleDelete = (category: Category) => {
+    setDeleteTarget(category);
+    setIsDeleteOpen(true);
+  };
+
+  // CREATE SUBMIT (existing)
+  const handleModalSubmitCreate = async (fullPath: string[]) => {
     try {
-      // Reset alert
       setSuccessMessage("");
       setErrorMessage("");
 
-      // Request Body sesuai spesifikasi Anda
-      const payload = {
-        path: fullPath
-      };
-
-      console.log("Sending Payload:", payload); // Debugging
-
-      // POST Request
+      const payload = { path: fullPath };
       const response = await axios.post(API.categories.path, payload);
 
       if (response.status === 200 || response.status === 201) {
         setSuccessMessage("Kategori berhasil disimpan!");
-        setIsModalOpen(false); // Tutup modal
-        fetchCategories();     // Refresh tabel tree
+        setIsModalOpen(false);
+        fetchCategories();
       }
-
     } catch (err: any) {
       console.error("Gagal menyimpan kategori:", err);
-      // Menangani pesan error dari backend jika ada
       const msg = err.response?.data?.message || "Terjadi kesalahan saat menyimpan data.";
       setErrorMessage(msg);
+    }
+  };
+
+  // RENAME SUBMIT
+  const handleModalSubmitRename = async (id: number, newName: string) => {
+    try {
+      setSuccessMessage("");
+      setErrorMessage("");
+
+      const payload = { name: newName };
+      const response = await axios.put(API.categories.rename(id), payload);
+
+      if (response.status === 200) {
+        setSuccessMessage("Kategori berhasil diupdate!");
+        setIsModalOpen(false);
+        fetchCategories();
+      }
+    } catch (err: any) {
+      console.error("Gagal rename kategori:", err);
+      const msg = err.response?.data?.message || "Terjadi kesalahan saat update data.";
+      setErrorMessage(msg);
+    }
+  };
+
+  // CONFIRM DELETE
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setDeleteLoading(true);
+    try {
+      setSuccessMessage("");
+      setErrorMessage("");
+
+      await axios.delete(API.categories.delete(deleteTarget.id));
+
+      setSuccessMessage("Kategori berhasil dihapus!");
+      setIsDeleteOpen(false);
+      setDeleteTarget(null);
+      fetchCategories();
+    } catch (err: any) {
+      console.error("Gagal hapus kategori:", err);
+      const msg = err.response?.data?.message || "Gagal menghapus kategori.";
+      setErrorMessage(msg);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -71,7 +135,7 @@ export default function CategoryPage() {
     setLoading(true);
     try {
       const response = await axios.get(API.categories.tree);
-      setCategories(response.data); 
+      setCategories(response.data);
     } catch (err) {
       console.error("Gagal mengambil kategori:", err);
       setError("Gagal memuat data kategori.");
@@ -86,20 +150,14 @@ export default function CategoryPage() {
 
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage("");
-      }, 2000);
-
+      const timer = setTimeout(() => setSuccessMessage(""), 2000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
   useEffect(() => {
     if (errorMessage) {
-      const timer = setTimeout(() => {
-        setErrorMessage("");
-      }, 2000);
-
+      const timer = setTimeout(() => setErrorMessage(""), 2000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
@@ -114,34 +172,32 @@ export default function CategoryPage() {
 
       <div className="flex flex-col gap-5 md:gap-7 2xl:gap-10">
         {successMessage && (
-            <div className="mb-4">
-              <Alert variant="success" title="Berhasil" message={successMessage} showLink={false} />
-            </div>
-          )}
-          
-          {errorMessage && (
-            <div className="mb-4">
-              <Alert variant="error" title="Gagal" message={errorMessage} showLink={false} />
-            </div>
-          )}
+          <div className="mb-4">
+            <Alert variant="success" title="Berhasil" message={successMessage} showLink={false} />
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="mb-4">
+            <Alert variant="error" title="Gagal" message={errorMessage} showLink={false} />
+          </div>
+        )}
+
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-          
           {/* Header */}
           <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center border-b border-stroke dark:border-strokedark">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
-              Daftar Kategori
-            </h4>
-            
+            <h4 className="text-xl font-semibold text-black dark:text-white">Daftar Kategori</h4>
+
             <Button size="sm" className="flex items-center gap-2" onClick={handleAddRoot}>
-               <PlusIcon />
-               Tambah Kategori
+              <PlusIcon />
+              Tambah Kategori
             </Button>
           </div>
 
           {/* Error Message */}
           {error && (
             <div className="p-6 pb-0">
-               <Alert variant="error" title="Error" message={error} showLink={false}/>
+              <Alert variant="error" title="Error" message={error} showLink={false} />
             </div>
           )}
 
@@ -161,27 +217,30 @@ export default function CategoryPage() {
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={3} className="py-4 text-center text-gray-500">
-                        Memuat data...
+                      Memuat data...
                     </td>
                   </tr>
                 ) : categories.length > 0 ? (
                   categories.map((category) => (
-                    <CategoryTableItem 
-                      key={category.id} 
-                      category={category} 
-                      level={0} 
-                      rootType={category.name} 
+                    <CategoryTableItem
+                      key={category.id}
+                      category={category}
+                      level={0}
+                      rootType={category.name}
                       onAddChild={handleAddChild}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
                     />
                   ))
                 ) : (
-                   <tr>
+                  <tr>
                     <td colSpan={3} className="py-4 text-center text-gray-500">
-                        Tidak ada data kategori.
+                      Tidak ada data kategori.
                     </td>
                   </tr>
                 )}
@@ -190,13 +249,31 @@ export default function CategoryPage() {
           </div>
         </div>
       </div>
-      <CategoryFormModal 
+
+      {/* Modal Create/Edit */}
+      <CategoryFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleModalSubmit}
+        onSubmit={handleModalSubmitCreate}
+        onSubmitRename={handleModalSubmitRename}
+        mode={modalMode}
         parentData={modalParentData}
         initialRootType={modalRootType}
         ancestors={modalAncestors}
+      />
+
+      {/* Confirm Delete */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={confirmDelete}
+        isLoading={deleteLoading}
+        title="Hapus Kategori"
+        description={
+          deleteTarget
+            ? `Yakin ingin menghapus "${deleteTarget.name}"? Jika kategori punya child, backend akan menolak (restrict).`
+            : "Yakin ingin menghapus kategori ini?"
+        }
       />
     </>
   );

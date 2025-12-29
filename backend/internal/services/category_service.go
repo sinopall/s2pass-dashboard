@@ -133,7 +133,7 @@ func (s *CategoryService) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 	if has {
-		return errors.New("cannot delete category that has children (restrict)")
+		return errors.New("Tidak bisa hapus kategori karena kategori tersebut sudah dipakai di produk")
 	}
 	return s.repo.Delete(ctx, id)
 }
