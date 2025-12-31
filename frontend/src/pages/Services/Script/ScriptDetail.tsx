@@ -47,8 +47,6 @@ export default function ScriptDetail() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Detail Script Agent" />
-
       <div className="flex flex-col gap-6">
         
         {/* HEADER INFO */}

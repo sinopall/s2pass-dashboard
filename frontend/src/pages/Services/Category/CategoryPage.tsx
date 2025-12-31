@@ -168,7 +168,6 @@ export default function CategoryPage() {
         title="Kategori Layanan | S2PAS"
         description="Halaman pengelolaan kategori layanan, request, dan complaint untuk sistem S2PAS Bank BJB."
       />
-      <PageBreadcrumb pageTitle="Kategori Layanan" />
 
       <div className="flex flex-col gap-5 md:gap-7 2xl:gap-10">
         {successMessage && (

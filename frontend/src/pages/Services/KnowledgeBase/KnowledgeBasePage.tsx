@@ -17,8 +17,6 @@ export default function KnowledgeBasePage() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Knowledge Base" />
-      
       {/* Tab Header */}
       <div className="mb-6 flex gap-4 border-b border-stroke dark:border-strokedark bg-white dark:bg-boxdark px-4 pt-4 rounded-t-sm">
         <button

@@ -19,14 +19,11 @@ export default function BreakingNewsTicker() {
   const [loading, setLoading] = useState(false);
 
   const merged = useMemo(() => {
-    // sort terbaru
     const sorted = [...items].sort((a, b) => {
       const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0;
       const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
       return tb - ta;
     });
-
-    // biar marquee terlihat terus: gandakan isi
     return sorted.length ? [...sorted, ...sorted] : [];
   }, [items]);
 
@@ -39,10 +36,6 @@ export default function BreakingNewsTicker() {
     const fetchBreaking = async () => {
       try {
         setLoading(true);
-
-        // NOTE:
-        // Kalau backend kamu belum support param "is_breaking",
-        // ganti jadi ambil list biasa limit besar lalu filter client-side.
         const [prodRes, scrRes] = await Promise.all([
           axios.get(API.products.list, {
             params: { page: 1, limit: 30, is_breaking: true },
@@ -70,10 +63,7 @@ export default function BreakingNewsTicker() {
           type: "script" as const,
         }));
 
-        // backend param is_breaking true harusnya sudah terfilter,
-        // tapi biar aman tetap filter.
         const combined = [...prodItems, ...scrItems].filter((x) => x.is_breaking);
-
         setItems(combined);
       } catch (e) {
         setItems([]);
@@ -83,8 +73,6 @@ export default function BreakingNewsTicker() {
     };
 
     fetchBreaking();
-
-    // auto refresh biar kalau ada breaking baru langsung muncul
     const t = setInterval(fetchBreaking, 60_000);
     return () => clearInterval(t);
   }, []);
@@ -93,42 +81,63 @@ export default function BreakingNewsTicker() {
   if (!items.length) return null;
 
   return (
-    <div className="w-full border-t border-gray-200 bg-red-50 dark:border-gray-800 dark:bg-red-900/20">
-      {/* CSS marquee tanpa ubah tailwind config */}
+    // 1. Tambahkan 'overflow-hidden' dan 'max-w-full' di container utama
+    <div className="w-full max-w-full overflow-hidden border-t border-gray-200 bg-red-50 dark:border-gray-800 dark:bg-red-900/20">
       <style>{`
         @keyframes s2pass-marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); } 
         }
         .s2pass-marquee {
-          animation: s2pass-marquee 22s linear infinite;
+          /* Pastikan animasi mulus */
+          display: flex;
+          width: max-content;
+          animation: s2pass-marquee 10s linear infinite;
         }
         .s2pass-marquee:hover {
           animation-play-state: paused;
         }
       `}</style>
 
-      <div className="flex items-center gap-3 px-4 py-2">
-        <span className="shrink-0 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">
+      {/* 2. Gunakan GRID Layout, bukan Flex. 
+             grid-cols-[auto_minmax(0,1fr)] artinya:
+             - Kolom 1 (Label): Lebar otomatis sesuai konten ("auto")
+             - Kolom 2 (Marquee): Ambil sisa ruang, TAPI bisa mengecil sampai 0 ("minmax(0, 1fr)") 
+      */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-4 py-2">
+        
+        {/* Kolom 1: Label Breaking */}
+        <span className="shrink-0 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white z-10">
           BREAKING
         </span>
 
-        <div className="relative flex-1 overflow-hidden">
-          <div className="s2pass-marquee flex w-max items-center gap-3">
+        {/* Kolom 2: Container Marquee */}
+        <div className="relative overflow-hidden h-full flex items-center">
+          {/* Masking Gradient (Opsional: agar teks terlihat memudar di ujung kiri/kanan) */}
+          <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
+
+          <div className="s2pass-marquee gap-3">
+            {/* Render 2 set item agar looping mulus (A B C A B C) */}
             {merged.map((it, idx) => (
               <button
-                key={`${it.type}-${it.id}-${idx}`}
+                key={`${it.type}-${it.id}-${idx}-1`}
                 type="button"
                 onClick={() => goDetail(it)}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm ring-1 ring-red-200 hover:bg-red-50 dark:bg-gray-900 dark:text-gray-100 dark:ring-red-900/40 dark:hover:bg-gray-800"
-                title={`Buka ${it.type === "product" ? "Product" : "Script"}: ${it.title}`}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm ring-1 ring-red-200 hover:bg-red-50 dark:bg-gray-900 dark:text-gray-100 dark:ring-red-900/40 dark:hover:bg-gray-800 transition-colors mx-1.5"
+                title={`Buka ${it.type}: ${it.title}`}
               >
-                <span className="text-[10px] font-bold text-red-600">
-                  {it.type === "product" ? "PRODUCT" : "SCRIPT"}
+                <span className="text-[10px] font-bold text-red-600 uppercase">
+                  {it.type}
                 </span>
                 <span className="whitespace-nowrap">{it.title}</span>
               </button>
             ))}
+             {/* Note: Logic duplikasi item sudah ada di useMemo 'merged', 
+                 jadi map di atas sudah merender list ganda. 
+                 Pastikan animation keyframes translateX(-50%) atau -100% disesuaikan dengan panjang konten.
+                 Biasanya -50% jika kita menduplikasi listnya 2x (total width 200%).
+             */}
           </div>
         </div>
       </div>

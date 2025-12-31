@@ -45,8 +45,6 @@ export default function ProductDetail() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Detail Produk" />
-
       <div className="flex flex-col gap-6">
         
         {/* HEADER INFO */}
@@ -99,7 +97,7 @@ export default function ProductDetail() {
                   {/* TAB CONTENT (ACCORDION LIST) */}
                   <div className="space-y-4">
                       {product.content.tabs[activeTab].accordions.map((acc, k) => (
-                          <AccordionItem key={k} title={acc.title} html={acc.body_html} />
+                          <AccordionItem key={k} title={acc.title} html={acc.body_html} defaultOpen={activeTab === 0}/>
                       ))}
                       {product.content.tabs[activeTab].accordions.length === 0 && (
                           <p className="text-gray-500 italic">Tidak ada accordion di tab ini.</p>
@@ -117,8 +115,8 @@ export default function ProductDetail() {
 }
 
 // Sub-component untuk Accordion Preview (Simple Toggle)
-const AccordionItem = ({ title, html }: { title: string, html: string }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const AccordionItem = ({ title, html, defaultOpen = false }: { title: string, html: string, defaultOpen?: boolean }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <div className="border border-stroke rounded dark:border-strokedark overflow-hidden">
             <button 

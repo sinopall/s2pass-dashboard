@@ -46,6 +46,7 @@ export default function ProductList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Filter & Pagination State
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +64,18 @@ export default function ProductList() {
     setDeleteTargetId(id);
     setIsDeleteModalOpen(true);
   };
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("user_data");
+    if (storedData) {
+      try {
+        const user = JSON.parse(storedData);
+        setIsAdmin(user.role === 'admin');
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
+    }
+  }, []);
 
   // --- 1. FETCH CATEGORY TREE ---
   useEffect(() => {
@@ -205,13 +218,15 @@ export default function ProductList() {
             </div>
 
             {/* Tambah */}
-            <div className="w-full md:w-auto flex justify-end">
-              <Button onClick={() => navigate("/knowledge-base/products/create")}>
-                <span className="flex items-center gap-2">
-                  <PlusIcon /> Tambah Produk
-                </span>
-              </Button>
-            </div>
+            {isAdmin && (
+              <div className="w-full md:w-auto flex justify-end">
+                <Button onClick={() => navigate("/knowledge-base/products/create")}>
+                  <span className="flex items-center gap-2">
+                    <PlusIcon /> Tambah Produk
+                  </span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -229,9 +244,14 @@ export default function ProductList() {
                   <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
                     Status
                   </th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">
-                    Aksi
-                  </th>
+                  {isAdmin && (
+                    <>
+                      <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">
+                        Aksi
+                      </th>
+                    </>
+                  )}
+                  
                 </tr>
               </thead>
 
@@ -287,41 +307,44 @@ export default function ProductList() {
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                         <div className="flex items-center justify-end gap-2 pr-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/knowledge-base/products/view/${item.id}`);
-                            }}
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
-                            title="Lihat Detail"
-                            type="button"
-                          >
-                            <EyeIcon className="w-5 h-5" />
-                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/knowledge-base/products/view/${item.id}`);
+                                }}
+                                className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
+                                title="Lihat Detail"
+                                type="button"
+                              >
+                                <EyeIcon className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/knowledge-base/products/edit/${item.id}`);
+                                }}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
+                                title="Edit"
+                                type="button"
+                              >
+                                <PencilIcon className="w-5 h-5" />
+                              </button>
 
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/knowledge-base/products/edit/${item.id}`);
-                            }}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
-                            title="Edit"
-                            type="button"
-                          >
-                            <PencilIcon className="w-5 h-5" />
-                          </button>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openDeleteModal(item.id);
-                            }}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
-                            title="Hapus"
-                            type="button"
-                          >
-                            <TrashBinIcon className="w-5 h-5" />
-                          </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteModal(item.id);
+                                }}
+                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
+                                title="Hapus"
+                                type="button"
+                              >
+                                <TrashBinIcon className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
