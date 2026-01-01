@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router"; 
 import axios from "../../api/axios";
 import API from "../../api/api";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Button from "../../components/ui/button/Button";
 import { PencilIcon, TrashBinIcon, PlusIcon, ChevronDownIcon } from "../../icons"; 
 import { toast } from 'react-toastify';
 import ConfirmationModal from "../../components/ui/modal/ConfirmationModal";
 import UserFormModal from "../../components/ui/modal/UserFormModal";
+import PageMeta from "../../components/common/PageMeta";
 
 interface User {
   id: number;
@@ -18,8 +17,6 @@ interface User {
 }
 
 export default function UserList() {
-  const navigate = useNavigate();
-
   // --- STATE ---
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +108,10 @@ export default function UserList() {
 
   return (
     <>
+      <PageMeta
+        title="User Management | S2PAS"
+        description=""
+      />
       <div className="flex flex-col gap-5 md:gap-7 2xl:gap-10">
         
         {/* CONTROL BAR */}

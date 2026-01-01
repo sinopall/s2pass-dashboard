@@ -4,6 +4,7 @@ import axios from "../../../api/axios";
 import API from "../../../api/api";
 import Button from "../../../components/ui/button/Button";
 import { PencilIcon, ChevronDownIcon } from "../../../icons";
+import PageMeta from "../../../components/common/PageMeta";
 
 // --- TYPES ---
 interface Accordion { title: string; body_html: string; }
@@ -59,8 +60,11 @@ export default function ScriptDetail() {
 
   return (
     <>
+      <PageMeta
+        title="Detail Script | S2PAS"
+        description=""
+      />
       <div className="flex flex-col gap-6">
-        
         {/* HEADER INFO */}
         <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

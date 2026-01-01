@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router";
-import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageMeta from "../../../components/common/PageMeta";
 import ProductList from "../Product/ProductList";
 import ScriptList from "../Script/ScriptList";
 import KnowledgeList from "./KnowledgeList";
@@ -27,6 +27,10 @@ export default function KnowledgeBasePage() {
 
   return (
     <>
+      <PageMeta
+        title="Knowledge Base | S2PAS"
+        description=""
+      />
       {isAdmin ? (
         <>
           <div className="mb-6 flex gap-4 border-b border-stroke dark:border-strokedark bg-white dark:bg-boxdark px-4 pt-4 rounded-t-sm">
