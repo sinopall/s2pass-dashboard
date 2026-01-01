@@ -69,7 +69,7 @@ export default function ScriptDetail() {
                     <h2 className="text-2xl font-bold text-black dark:text-white">{script.title}</h2>
                     {script.is_breaking && (
                        <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
-                           Important
+                           Breaking
                        </span>
                     )}
                  </div>
