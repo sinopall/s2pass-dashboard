@@ -23,7 +23,20 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [product, setProduct] = useState<ProductDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(0); // State untuk Tab Aktif
+  const [activeTab, setActiveTab] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("user_data");
+    if (storedData) {
+      try {
+        const user = JSON.parse(storedData);
+        setIsAdmin(user.role === 'admin');
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
+    }
+  }, []);
 
   // Fetch Data
   useEffect(() => {
@@ -61,9 +74,11 @@ export default function ProductDetail() {
               </div>
               <div className="flex gap-3">
                  <Button variant="outline" onClick={() => navigate(-1)}>Kembali</Button>
-                 <Button onClick={() => navigate(`/knowledge-base/products/edit/${product.id}`)}>
-                    <PencilIcon className="w-4 h-4 mr-2"/> Edit Produk
-                 </Button>
+                 {isAdmin && (
+                  <Button onClick={() => navigate(`/knowledge-base/products/edit/${product.id}`)}>
+                      <PencilIcon className="w-4 h-4 mr-2"/> Edit Produk
+                  </Button>
+                 )}
               </div>
            </div>
         </div>
@@ -97,7 +112,7 @@ export default function ProductDetail() {
                   {/* TAB CONTENT (ACCORDION LIST) */}
                   <div className="space-y-4">
                       {product.content.tabs[activeTab].accordions.map((acc, k) => (
-                          <AccordionItem key={k} title={acc.title} html={acc.body_html} defaultOpen={activeTab === 0}/>
+                          <AccordionItem key={`${activeTab}-${k}`} title={acc.title} html={acc.body_html} defaultOpen={activeTab === 0}/>
                       ))}
                       {product.content.tabs[activeTab].accordions.length === 0 && (
                           <p className="text-gray-500 italic">Tidak ada accordion di tab ini.</p>

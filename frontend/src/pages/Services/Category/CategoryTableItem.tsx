@@ -6,14 +6,11 @@ interface CategoryTableItemProps {
   category: Category;
   level: number;
   rootType?: string;
-
   onAddChild: (category: Category, rootType: string, ancestors: Category[]) => void;
-
-  // NEW
   onEdit: (category: Category, rootType: string, ancestors: Category[]) => void;
   onDelete: (category: Category) => void;
-
   ancestors?: Category[];
+  isAdmin: boolean;
 }
 
 export default function CategoryTableItem({
@@ -24,6 +21,7 @@ export default function CategoryTableItem({
   onEdit,
   onDelete,
   ancestors = [],
+  isAdmin,
 }: CategoryTableItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasChildren = category.children && category.children.length > 0;
@@ -90,33 +88,38 @@ export default function CategoryTableItem({
 
         <td className="py-4 px-4 text-right dark:border-strokedark">
           <div className="flex items-center justify-end space-x-2">
-            <button
-              onClick={handleAddClick}
-              className="p-2 text-gray-600 hover:text-primary transition-colors"
-              title="Tambah Sub-Kategori"
-            >
-              <PlusIcon />
-            </button>
-
-            {!isRoot && (
+            {isAdmin && (
               <>
                 <button
-                  onClick={handleEditClick}
+                  onClick={handleAddClick}
                   className="p-2 text-gray-600 hover:text-primary transition-colors"
-                  title="Edit"
+                  title="Tambah Sub-Kategori"
                 >
-                  <PencilIcon className="w-4 h-4" />
+                  <PlusIcon />
                 </button>
 
-                <button
-                  onClick={handleDeleteClick}
-                  className="p-2 text-red-500 hover:text-red-700 transition-colors"
-                  title="Hapus"
-                >
-                  <TrashBinIcon className="w-4 h-4" />
-                </button>
+                {!isRoot && (
+                  <>
+                    <button
+                      onClick={handleEditClick}
+                      className="p-2 text-gray-600 hover:text-primary transition-colors"
+                      title="Edit"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={handleDeleteClick}
+                      className="p-2 text-red-500 hover:text-red-700 transition-colors"
+                      title="Hapus"
+                    >
+                      <TrashBinIcon className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
               </>
             )}
+            
           </div>
         </td>
       </tr>

@@ -31,6 +31,10 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
     scriptSvc := services.NewScriptService(scriptRepo)
     scriptHandler := handlers.NewScriptHandler(scriptSvc)
 
+	knowRepo := repositories.NewKnowledgeRepo(db)
+	knowSvc := services.NewKnowledgeService(knowRepo)
+	knowHandler := handlers.NewKnowledgeHandler(knowSvc)
+
 	uploadH := handlers.NewUploadHandler()
 
 	api := r.Group("/api")
@@ -82,4 +86,7 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	admin.POST("/scripts", scriptHandler.Create)
 	admin.PUT("/scripts/:id", scriptHandler.Update) 
     admin.DELETE("/scripts/:id", scriptHandler.Delete)
+
+	// public product and script
+	api.GET("/knowledge-base/all", knowHandler.GetAll)
 }

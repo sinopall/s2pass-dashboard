@@ -23,6 +23,7 @@ export default function CategoryPage() {
   const [modalParentData, setModalParentData] = useState<Category | null>(null);
   const [modalRootType, setModalRootType] = useState("Informasi");
   const [modalAncestors, setModalAncestors] = useState<Category[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -149,6 +150,16 @@ export default function CategoryPage() {
   }, []);
 
   useEffect(() => {
+    const storedData = localStorage.getItem("user_data");
+    if (storedData) {
+      try {
+        const user = JSON.parse(storedData);
+        setIsAdmin(user.role === 'admin');
+      } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(""), 2000);
       return () => clearTimeout(timer);
@@ -187,10 +198,12 @@ export default function CategoryPage() {
           <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center border-b border-stroke dark:border-strokedark">
             <h4 className="text-xl font-semibold text-black dark:text-white">Daftar Kategori</h4>
 
-            <Button size="sm" className="flex items-center gap-2" onClick={handleAddRoot}>
-              <PlusIcon />
-              Tambah Kategori
-            </Button>
+            {isAdmin && (
+              <Button size="sm" className="flex items-center gap-2" onClick={handleAddRoot}>
+                <PlusIcon />
+                Tambah Kategori
+              </Button>
+            )}
           </div>
 
           {/* Error Message */}
@@ -211,9 +224,13 @@ export default function CategoryPage() {
                   <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                     Tipe
                   </th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right">
-                    Aksi
-                  </th>
+                  {isAdmin && (
+                    <>
+                      <th className="py-4 px-4 font-medium text-black dark:text-white text-right">
+                        Aksi
+                      </th>
+                    </>
+                  )}    
                 </tr>
               </thead>
 
@@ -234,6 +251,7 @@ export default function CategoryPage() {
                       onAddChild={handleAddChild}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      isAdmin={isAdmin}
                     />
                   ))
                 ) : (

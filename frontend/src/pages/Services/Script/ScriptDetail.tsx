@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import axios from "../../../api/axios";
 import API from "../../../api/api";
-import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
 import { PencilIcon, ChevronDownIcon } from "../../../icons";
 
@@ -24,7 +23,20 @@ export default function ScriptDetail() {
   const navigate = useNavigate();
   const [script, setScript] = useState<ScriptDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(0); // State untuk Tab Aktif
+  const [activeTab, setActiveTab] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("user_data");
+    if (storedData) {
+      try {
+        const user = JSON.parse(storedData);
+        setIsAdmin(user.role === 'admin');
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
+    }
+  }, []);
 
   // --- FETCH DATA SCRIPT ---
   useEffect(() => {
@@ -66,10 +78,11 @@ export default function ScriptDetail() {
               <div className="flex gap-3">
                  <Button variant="outline" onClick={() => navigate("/knowledge-base", { state: { activeTab: "script" } })}>Kembali</Button>
                  
-                 {/* PERUBAHAN 2: Arahkan ke rute Edit Script */}
-                 <Button onClick={() => navigate(`/knowledge-base/scripts/edit/${script.id}`)}>
-                    <PencilIcon className="w-4 h-4 mr-2"/> Edit Script
-                 </Button>
+                 {isAdmin && (
+                  <Button onClick={() => navigate(`/knowledge-base/scripts/edit/${script.id}`)}>
+                      <PencilIcon className="w-4 h-4 mr-2"/> Edit Script
+                  </Button>
+                 )}
               </div>
            </div>
         </div>
@@ -103,7 +116,7 @@ export default function ScriptDetail() {
                   {/* TAB CONTENT (ACCORDION LIST) */}
                   <div className="space-y-4">
                       {script.content.tabs[activeTab].accordions.map((acc, k) => (
-                          <AccordionItem key={k} title={acc.title} html={acc.body_html} />
+                          <AccordionItem key={`${activeTab}-${k}`} title={acc.title} html={acc.body_html} defaultOpen={activeTab === 0}/>
                       ))}
                       {script.content.tabs[activeTab].accordions.length === 0 && (
                           <p className="text-gray-500 italic">Tidak ada accordion di tab ini.</p>
@@ -121,8 +134,8 @@ export default function ScriptDetail() {
 }
 
 // --- SUB COMPONENT (SAMA SEPERTI PRODUCT DETAIL) ---
-const AccordionItem = ({ title, html }: { title: string, html: string }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const AccordionItem = ({ title, html, defaultOpen = false }: { title: string, html: string, defaultOpen?: boolean }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <div className="border border-stroke rounded dark:border-strokedark overflow-hidden">
             <button 
