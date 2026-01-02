@@ -66,7 +66,7 @@ const navItems: NavItem[] = [
   // ✅ TAMBAH MENU WARNING
   {
     icon: <WarningIcon />,
-    name: "Warning",
+    name: "Motivation",
     path: "/warning",
   },
 

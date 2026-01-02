@@ -18,11 +18,11 @@ type Person = {
 export default function WarningPage() {
   const people: Person[] = useMemo(
     () => [
-      { key: "kak-fay", name: "Kak Fay", role: "Manager Operations", quote: "Udah diapain tuh anak , SP aja anaknya", img: KakFayImg },
-      { key: "mas-iyan", name: "Mas Iyan", role: "Asisten Manager", quote: "Di monit terus ya kang anaknya, atau BATL aja sekalian", img: MasIyanImg },
+      { key: "kak-fay", name: "Kak Fay", role: "Manager Operations", quote: "Mau di SP?", img: KakFayImg },
+      { key: "mas-iyan", name: "Mas Iyan", role: "Asisten Manager", quote: "Di monit terus ya anaknya, atau BATL aja sekalian", img: MasIyanImg },
       { key: "pa-andi", name: "Pa Andi", role: "SPV", quote: "HMMM...", img: PaAndiImg },
       { key: "pa-ferdy", name: "Pa Ferdy", role: "TL", quote: "Kok bisa ada finding?", img: PaFerdyImg },
-      { key: "a-dani", name: "A Dani", role: "QC", quote: "Apasih…", img: ADaniImg },
+      { key: "a-dani", name: "A Dani", role: "QC", quote: "Lu ada finding lagi, improve dong", img: ADaniImg },
     ],
     []
   );
