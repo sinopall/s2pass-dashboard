@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -15,6 +16,9 @@ import CreateScript from "./pages/Services/Script/CreateScript";
 import ScriptDetail from "./pages/Services/Script/ScriptDetail";
 import UserList from "./pages/User/UserList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+
+// ✅ TAMBAH INI
+import WarningPage from "./pages/Warning/WarningPage";
 
 export default function App() {
   return (
@@ -36,31 +40,26 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           <Route element={<AppLayout />}>
-            
             {/* 1. PUBLIC ACCESS (Untuk Agent & Admin) */}
             <Route index path="/" element={<Home />} />
             <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/services/categories" element={<CategoryPage />} />
-            <Route path="/knowledge-base/products/view/:id" element={<ProductDetail />} /> 
+            <Route path="/knowledge-base/products/view/:id" element={<ProductDetail />} />
             <Route path="/knowledge-base/scripts/view/:id" element={<ScriptDetail />} />
 
+            {/* ✅ WARNING PAGE */}
+            <Route path="/warning" element={<WarningPage />} />
 
             {/* 2. ADMIN ONLY ACCESS (Restricted) */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                
-                {/* User Management */}
-                <Route path="/user-management" element={<UserList />} />
-                
-                {/* Write Access Product */}
-                <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
-                <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
-                
-                {/* Write Access Script */}
-                <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
-                <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
-            
-            </Route>
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="/user-management" element={<UserList />} />
 
+              <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
+              <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
+
+              <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
+              <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
+            </Route>
           </Route>
 
           {/* --- AUTH LAYOUT --- */}
