@@ -23,10 +23,15 @@ func NewUserHandler(svc *services.UserService) *UserHandler {
 
 func (h *UserHandler) List(c *gin.Context) {
 	var q dto.UserListQuery
-	if err := c.ShouldBindQuery(&q); err != nil {}
-	
-	if q.Page == 0 { q.Page = 1 }
-	if q.Limit == 0 { q.Limit = 10 }
+	if err := c.ShouldBindQuery(&q); err != nil {
+	}
+
+	if q.Page == 0 {
+		q.Page = 1
+	}
+	if q.Limit == 0 {
+		q.Limit = 10
+	}
 
 	users, total, err := h.svc.List(c.Request.Context(), q.Q, q.Role, q.Page, q.Limit)
 	if err != nil {
@@ -57,7 +62,8 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
-	u, err := h.svc.CreateAgent(c.Request.Context(), req.Username, req.Password)
+	u, err := h.svc.CreateUser(c.Request.Context(), req.Username, req.Password, req.Role)
+
 	if err != nil {
 		utils.JSONError(c, 400, err.Error())
 		return

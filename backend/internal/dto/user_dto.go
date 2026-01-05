@@ -4,6 +4,7 @@ type CreateUserRequest struct {
 	Username       string `json:"username" validate:"required,min=3,max=50"`
 	Password       string `json:"password" validate:"required,min=8,max=128"`
 	RetypePassword string `json:"retype_password" validate:"required,min=8,max=128"`
+	Role           string `json:"role" validate:"required,oneof=admin agent"`
 }
 
 type UpdateUserRequest struct {
@@ -13,8 +14,8 @@ type UpdateUserRequest struct {
 }
 
 type UserListQuery struct {
-	Q    string `form:"q"`   
-	Role string `form:"role"` 
-	Page int    `form:"page"`
-	Limit int   `form:"limit"`
+	Q     string `form:"q"`
+	Role  string `form:"role"`
+	Page  int    `form:"page"`
+	Limit int    `form:"limit"`
 }

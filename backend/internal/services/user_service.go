@@ -17,12 +17,12 @@ func (s *UserService) List(ctx context.Context, q, role string, page, limit int)
 	return s.repo.List(ctx, q, role, page, limit)
 }
 
-func (s *UserService) CreateAgent(ctx context.Context, username, password string) (*models.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, username, password, role string) (*models.User, error) {
 	hash, err := utils.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.Create(ctx, username, hash, "agent")
+	return s.repo.Create(ctx, username, hash, role)
 }
 
 func (s *UserService) Update(ctx context.Context, id int64, username *string, password *string) (*models.User, error) {
