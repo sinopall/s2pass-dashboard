@@ -136,6 +136,7 @@ export default function CategoryTableItem({
             onEdit={onEdit}
             onDelete={onDelete}
             ancestors={[...ancestors, category]}
+            isAdmin={isAdmin}
           />
         ))}
     </>
