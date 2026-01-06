@@ -2,7 +2,7 @@
 layer(base);
 
 @import "tailwindcss";
-
+@plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -775,4 +775,12 @@ span.flatpickr-weekday,
 
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
+}
+
+.tox-promotion {
+    display: none !important;
+}
+
+.tox-statusbar__branding {
+    display: none !important;
 }

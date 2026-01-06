@@ -183,8 +183,10 @@ const AccordionItem = ({ title, html }: { title: string; html: string }) => {
       </button>
       {isOpen && (
         <div
-          className="prose max-w-none bg-white p-4 text-sm dark:prose-invert dark:bg-boxdark
-          [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5"
+          className="p-4 bg-white dark:bg-boxdark text-black dark:text-gray-300 
+                     prose max-w-none dark:prose-invert
+                     prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-a:text-primary"
+          
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}

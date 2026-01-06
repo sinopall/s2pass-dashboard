@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useForm, useFieldArray, Control, Controller, useWatch } from "react-hook-form";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css"; 
+// 1. GANTI IMPORT QUILL DENGAN TINYMCE
+import { Editor } from '@tinymce/tinymce-react';
+
 import axios from "../../api/axios";
 import API from "../../api/api"; 
 import Button from "../ui/button/Button";
@@ -13,7 +14,6 @@ import { TrashBinIcon, PlusIcon, ChevronDownIcon } from "../../icons";
 export interface AccordionItem { title: string; body_html: string; }
 export interface TabItem { title: string; accordions: AccordionItem[]; }
 
-// Tipe data form yang seragam untuk Product & Script
 export interface ContentFormValues {
   title: string;
   slug: string;
@@ -22,31 +22,21 @@ export interface ContentFormValues {
   content: { tabs: TabItem[]; };
 }
 
-// Props yang diterima komponen ini
 interface ContentFormProps {
-  initialValues?: ContentFormValues;      // Data awal (untuk Edit Mode)
-  onSubmit: (data: ContentFormValues) => void; // Fungsi yang dijalankan saat Submit
-  isSubmitting: boolean;                  // Status loading saat save
-  onCancel: () => void;                   // Fungsi saat tombol Batal diklik
-  titleLabel?: string;                    // Label judul (default: "Judul")
-  typeLabel?: string;                     // Label tipe konten (default: "Produk")
+  initialValues?: ContentFormValues;
+  onSubmit: (data: ContentFormValues) => void;
+  isSubmitting: boolean;
+  onCancel: () => void;
+  titleLabel?: string;
+  typeLabel?: string;
 }
 
 interface CategoryOption { id: number; name: string; }
 interface CategoryLevel { depth: number; options: CategoryOption[]; selectedId: string; isLoading: boolean; }
 
-// --- CONFIG QUILL ---
-const useQuillModules = () => {
-  return useMemo(() => ({
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'], 
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link', 'image'], 
-      ['clean']
-    ],
-  }), []);
-};
+// --- SETTING API KEY TINYMCE ---
+// SANGAT DISARANKAN: Pindahkan string ini ke file .env (VITE_TINYMCE_API_KEY)
+const TINY_API_KEY = import.meta.env.VITE_TINYMCE_API_KEY;
 
 // --- SUB-COMPONENT: ACCORDION ARRAY ---
 const AccordionArray = ({ nestIndex, control }: { nestIndex: number; control: Control<ContentFormValues> }) => {
@@ -54,7 +44,6 @@ const AccordionArray = ({ nestIndex, control }: { nestIndex: number; control: Co
     control,
     name: `content.tabs.${nestIndex}.accordions`,
   });
-  const quillModules = useQuillModules(); 
 
   return (
     <div className="mt-6 pl-4 border-l-4 border-gray-200 dark:border-strokedark space-y-6">
@@ -74,12 +63,45 @@ const AccordionArray = ({ nestIndex, control }: { nestIndex: number; control: Co
             </div>
             <div>
                 <Label className="font-semibold text-gray-700 dark:text-gray-300">Konten Detail (HTML)</Label>
-                <div className="bg-white dark:bg-boxdark rounded overflow-hidden">
+                <div className="rounded overflow-hidden border border-stroke dark:border-strokedark">
+                    {/* 2. IMPLEMENTASI TINYMCE EDITOR */}
                     <Controller
                         name={`content.tabs.${nestIndex}.accordions.${k}.body_html`}
                         control={control}
                         render={({ field }) => (
-                        <ReactQuill theme="snow" modules={quillModules} value={field.value} onChange={field.onChange} className="bg-white dark:bg-boxdark h-64 mb-12" />
+                        <Editor
+                            apiKey={TINY_API_KEY} // Jangan lupa masukkan API Key
+                            value={field.value}
+                            onEditorChange={(content) => field.onChange(content)}
+                            init={{
+                                height: 700,
+                                menubar: true, // Tampilkan menu bar agar akses ke Tabel lebih lengkap
+                                plugins: [
+                                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                                ],
+                                toolbar: 'undo redo | blocks | ' +
+                                    'bold italic forecolor | alignleft aligncenter ' +
+                                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                                    'table image link | removeformat | code', // Tombol Table & Image ada disini
+                                content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                                
+                                // Opsi tambahan untuk Image Upload (jika ingin convert ke base64 otomatis)
+                                images_upload_handler: (blobInfo) => new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.readAsDataURL(blobInfo.blob());
+                                    reader.onload = () => resolve(reader.result as string);
+                                }),
+                                
+                                // Opsi Tabel agar lebih fleksibel
+                                table_sizing_mode: 'responsive',
+                                table_class_list: [
+                                    {title: 'None', value: ''},
+                                    {title: 'Bordered', value: 'table-bordered'}, // Bisa sesuaikan dengan class CSS Anda
+                                ]
+                            }}
+                        />
                         )}
                     />
                 </div>
@@ -175,9 +197,7 @@ export default function ContentForm({
             reconstructDropdowns(initialValues.category_id);
         }
     } else {
-        // Init untuk Create Mode (Load Root Level)
         const initCategory = async () => {
-             // Default Root ID = 1 (Informasi)
              const children = await fetchChildren(1);
              setCategoryLevels(children.length > 0 ? [{ depth: 1, options: children, selectedId: "", isLoading: false }] : []);
         };
@@ -212,7 +232,6 @@ export default function ContentForm({
              setCategoryLevels(prev => [...prev, { depth: prev.length + 1, options: nextChildren, selectedId: "", isLoading: false }]);
          }
      } else {
-         // Fallback logic
          if (index === 0) {
              let rootId = 1;
              if (rootType === "Request") rootId = 2;
@@ -225,11 +244,8 @@ export default function ContentForm({
      }
   };
 
-  // --- LOGIC SLUG ---
   const titleValue = useWatch({ control, name: "title" });
   useEffect(() => {
-    // Generate slug hanya jika create mode (tidak ada initialValues) atau user belum mengetik manual
-    // Disini disederhanakan: update slug jika title berubah
     if (titleValue) {
         const slug = titleValue.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         setValue("slug", slug, { shouldDirty: true }); 
