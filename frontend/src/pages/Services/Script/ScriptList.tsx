@@ -2,9 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import axios from "../../../api/axios";
 import API from "../../../api/api";
-import { flattenCategoryTree, CategoryNode, FlatCategory } from "../../../utils/categoryUtils";
+import {
+  flattenCategoryTree,
+  CategoryNode,
+  FlatCategory,
+} from "../../../utils/categoryUtils";
 import Button from "../../../components/ui/button/Button";
-import { PencilIcon, TrashBinIcon, PlusIcon, ChevronDownIcon } from "../../../icons";
+import {
+  PencilIcon,
+  TrashBinIcon,
+  PlusIcon,
+  ChevronDownIcon,
+} from "../../../icons";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/ui/modal/ConfirmationModal";
 import { Script } from "../types";
@@ -23,7 +32,11 @@ const EyeIcon = ({ className = "" }: { className?: string }) => (
       strokeLinejoin="round"
       d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
     />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
   </svg>
 );
 
@@ -47,6 +60,8 @@ export default function ScriptList() {
 
   const [flatCategories, setFlatCategories] = useState<FlatCategory[]>([]);
   const [categoryMap, setCategoryMap] = useState<Record<number, string>>({});
+
+  setLimit(10); // Default limit, bisa diubah sesuai kebutuhan
 
   const openDeleteModal = (id: number) => {
     setDeleteTargetId(id);
@@ -82,7 +97,12 @@ export default function ScriptList() {
   const fetchScripts = async () => {
     setLoading(true);
     try {
-      const params = { page, limit, q: debouncedSearch, categoryId: selectedCatId };
+      const params = {
+        page,
+        limit,
+        q: debouncedSearch,
+        categoryId: selectedCatId,
+      };
       const response = await axios.get(API.scripts.list, { params });
       setScripts(response.data.items);
       setTotalData(response.data.total);
@@ -132,8 +152,18 @@ export default function ScriptList() {
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-grow">
               <div className="relative w-full sm:w-64">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -166,7 +196,9 @@ export default function ScriptList() {
             </div>
 
             <div className="w-full md:w-auto flex justify-end">
-              <Button onClick={() => navigate("/knowledge-base/scripts/create")}>
+              <Button
+                onClick={() => navigate("/knowledge-base/scripts/create")}
+              >
                 <span className="flex items-center gap-2">
                   <PlusIcon /> Tambah Script
                 </span>
@@ -181,34 +213,62 @@ export default function ScriptList() {
             <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                  <th className="py-4 px-4 font-medium text-black dark:text-white xl:pl-11 w-[50px]">No</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Info Script</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Kategori</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-center">Status</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">Aksi</th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white xl:pl-11 w-[50px]">
+                    No
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white">
+                    Info Script
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white">
+                    Kategori
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
+                    Status
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5} className="text-center py-10">Memuat data...</td></tr>
+                  <tr>
+                    <td colSpan={5} className="text-center py-10">
+                      Memuat data...
+                    </td>
+                  </tr>
                 ) : scripts.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-10 text-gray-500">Data tidak ditemukan.</td></tr>
+                  <tr>
+                    <td colSpan={5} className="text-center py-10 text-gray-500">
+                      Data tidak ditemukan.
+                    </td>
+                  </tr>
                 ) : (
                   scripts.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors"
+                    >
                       <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
-                        <span className="text-gray-500">#{(page - 1) * limit + index + 1}</span>
+                        <span className="text-gray-500">
+                          #{(page - 1) * limit + index + 1}
+                        </span>
                       </td>
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                        <h5 className="font-semibold text-black dark:text-white">{item.title}</h5>
-                        <p className="text-xs text-gray-500 font-mono mt-0.5">/{item.slug}</p>
+                        <h5 className="font-semibold text-black dark:text-white">
+                          {item.title}
+                        </h5>
+                        <p className="text-xs text-gray-500 font-mono mt-0.5">
+                          /{item.slug}
+                        </p>
                       </td>
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                         <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          {categoryMap[item.category_id] || `ID: ${item.category_id}`}
+                          {categoryMap[item.category_id] ||
+                            `ID: ${item.category_id}`}
                         </span>
                       </td>
 
@@ -228,7 +288,11 @@ export default function ScriptList() {
                         <div className="flex items-center justify-end gap-2 pr-4">
                           <button
                             type="button"
-                            onClick={() => navigate(`/knowledge-base/scripts/view/${item.id}`)}
+                            onClick={() =>
+                              navigate(
+                                `/knowledge-base/scripts/view/${item.id}`,
+                              )
+                            }
                             className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
                             title="Lihat Detail"
                           >
@@ -237,7 +301,11 @@ export default function ScriptList() {
 
                           <button
                             type="button"
-                            onClick={() => navigate(`/knowledge-base/scripts/edit/${item.id}`)}
+                            onClick={() =>
+                              navigate(
+                                `/knowledge-base/scripts/edit/${item.id}`,
+                              )
+                            }
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
                             title="Edit"
                           >
@@ -263,7 +331,9 @@ export default function ScriptList() {
 
           {/* PAGINATION */}
           <div className="py-4 px-6 border-t border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-meta-4/20">
-            <div className="text-sm text-gray-500">Total <b>{totalData}</b> script</div>
+            <div className="text-sm text-gray-500">
+              Total <b>{totalData}</b> script
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"

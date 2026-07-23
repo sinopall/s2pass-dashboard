@@ -61,7 +61,16 @@ func (s *ProductService) ensureUniqueSlug(ctx context.Context, base string, excl
 	return "", errors.New("gagal generate slug unik")
 }
 
-func (s *ProductService) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, content any) (models.Product, error) {
+// resolveIsActive: kalau tidak dikirim (nil) dari request, default-kan ke true.
+// Ini menjaga backward-compat kalau ada client lama yang belum kirim field ini.
+func resolveIsActive(isActive *bool) bool {
+	if isActive == nil {
+		return true
+	}
+	return *isActive
+}
+
+func (s *ProductService) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, isActive *bool, content any) (models.Product, error) {
 	ok, err := s.repo.CategoryExists(ctx, categoryID)
 	if err != nil {
 		return models.Product{}, err
@@ -79,10 +88,10 @@ func (s *ProductService) Create(ctx context.Context, title, slug string, categor
 		return models.Product{}, err
 	}
 
-	return s.repo.Create(ctx, title, finalSlug, categoryID, isBreaking, content)
+	return s.repo.Create(ctx, title, finalSlug, categoryID, isBreaking, resolveIsActive(isActive), content)
 }
 
-func (s *ProductService) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Product, error) {
+func (s *ProductService) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, isActive *bool, content any) (models.Product, error) {
 	ok, err := s.repo.CategoryExists(ctx, categoryID)
 	if err != nil {
 		return models.Product{}, err
@@ -100,7 +109,12 @@ func (s *ProductService) Update(ctx context.Context, id int64, title, slug strin
 		return models.Product{}, err
 	}
 
-	return s.repo.Update(ctx, id, title, finalSlug, categoryID, isBreaking, content)
+	return s.repo.Update(ctx, id, title, finalSlug, categoryID, isBreaking, resolveIsActive(isActive), content)
+}
+
+// UpdateStatus - toggle cepat aktif/nonaktif tanpa perlu payload penuh.
+func (s *ProductService) UpdateStatus(ctx context.Context, id int64, isActive bool) (models.Product, error) {
+	return s.repo.UpdateStatus(ctx, id, isActive)
 }
 
 func (s *ProductService) Delete(ctx context.Context, id int64) error {
@@ -115,8 +129,8 @@ func (s *ProductService) GetBySlug(ctx context.Context, slug string) (models.Pro
 	return s.repo.GetBySlug(ctx, slug)
 }
 
-func (s *ProductService) List(ctx context.Context, q string, categoryID int64, page, limit int) ([]models.Product, int, error) {
-	return s.repo.List(ctx, q, categoryID, page, limit)
+func (s *ProductService) List(ctx context.Context, q string, categoryID int64, page, limit int, active *bool) ([]models.Product, int, error) {
+	return s.repo.List(ctx, q, categoryID, page, limit, active)
 }
 
 func (s *ProductService) Breaking(ctx context.Context, limit int) ([]models.Product, error) {

@@ -9,8 +9,14 @@ import { PencilIcon, ChevronDownIcon } from "../../../icons";
 const DASH_RETURN_KEY = "s2pass_dash_return_v1";
 
 // Type definitions (sesuaikan dengan API)
-interface Accordion { title: string; body_html: string; }
-interface Tab { title: string; accordions: Accordion[]; }
+interface Accordion {
+  title: string;
+  body_html: string;
+}
+interface Tab {
+  title: string;
+  accordions: Accordion[];
+}
 interface ProductDetailData {
   id: number;
   title: string;
@@ -55,36 +61,38 @@ export default function ProductDetail() {
     if (id) fetchDetail();
   }, [id]);
 
- const location = useLocation();
+  const location = useLocation();
 
-const handleBackToDashboard = () => {
-  // 1) paling aman: dari state
-  const stateFrom = (location.state as any)?.from;
-  if (typeof stateFrom === "string" && stateFrom.length > 0) {
-    navigate(stateFrom);
-    return;
-  }
-
-  // 2) cadangan: sessionStorage
-  try {
-    const raw = sessionStorage.getItem(DASH_RETURN_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data?.returnPath) {
-        navigate(data.returnPath);
-        return;
-      }
+  const handleBackToDashboard = () => {
+    // 1) paling aman: dari state
+    const stateFrom = (location.state as any)?.from;
+    if (typeof stateFrom === "string" && stateFrom.length > 0) {
+      navigate(stateFrom);
+      return;
     }
-  } catch {}
 
-  // 3) fallback: route aman (jangan navigate(-1))
-  navigate("/"); 
-};
+    // 2) cadangan: sessionStorage
+    try {
+      const raw = sessionStorage.getItem(DASH_RETURN_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data?.returnPath) {
+          navigate(data.returnPath);
+          return;
+        }
+      }
+    } catch {
+      console.error("Gagal membaca sessionStorage untuk returnPath");
+    }
 
+    // 3) fallback: route aman (jangan navigate(-1))
+    navigate("/");
+  };
 
-
-  if (loading) return <div className="p-10 text-center">Memuat detail produk...</div>;
-  if (!product) return <div className="p-10 text-center">Produk tidak ditemukan.</div>;
+  if (loading)
+    return <div className="p-10 text-center">Memuat detail produk...</div>;
+  if (!product)
+    return <div className="p-10 text-center">Produk tidak ditemukan.</div>;
 
   return (
     <>
@@ -95,7 +103,9 @@ const handleBackToDashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold text-black dark:text-white">{product.title}</h2>
+                <h2 className="text-2xl font-bold text-black dark:text-white">
+                  {product.title}
+                </h2>
                 {product.is_breaking && (
                   <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
                     Breaking
@@ -103,7 +113,10 @@ const handleBackToDashboard = () => {
                 )}
               </div>
               <p className="text-sm text-gray-500">
-                Slug: <span className="font-mono bg-gray-100 px-1 rounded">{product.slug}</span>
+                Slug:{" "}
+                <span className="font-mono bg-gray-100 px-1 rounded">
+                  {product.slug}
+                </span>
               </p>
             </div>
 
@@ -112,7 +125,11 @@ const handleBackToDashboard = () => {
                 Kembali
               </Button>
               {isAdmin && (
-                <Button onClick={() => navigate(`/knowledge-base/products/edit/${product.id}`)}>
+                <Button
+                  onClick={() =>
+                    navigate(`/knowledge-base/products/edit/${product.id}`)
+                  }
+                >
                   <PencilIcon className="w-4 h-4 mr-2" /> Edit Produk
                 </Button>
               )}
@@ -123,7 +140,9 @@ const handleBackToDashboard = () => {
         {/* PREVIEW CONTENT (TABS & ACCORDION) */}
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke py-4 px-6 dark:border-strokedark">
-            <h3 className="font-semibold text-black dark:text-white">Konten Produk</h3>
+            <h3 className="font-semibold text-black dark:text-white">
+              Konten Produk
+            </h3>
           </div>
 
           <div className="p-6">
@@ -157,7 +176,9 @@ const handleBackToDashboard = () => {
                     />
                   ))}
                   {product.content.tabs[activeTab].accordions.length === 0 && (
-                    <p className="text-gray-500 italic">Tidak ada accordion di tab ini.</p>
+                    <p className="text-gray-500 italic">
+                      Tidak ada accordion di tab ini.
+                    </p>
                   )}
                 </div>
               </>
@@ -189,14 +210,15 @@ const AccordionItem = ({
         className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 dark:bg-meta-4 dark:hover:bg-meta-4/80 transition"
       >
         <span className="font-medium text-black dark:text-white">{title}</span>
-        <ChevronDownIcon className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDownIcon
+          className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
       {isOpen && (
         <div
           className="p-4 bg-white dark:bg-boxdark text-black dark:text-gray-300 
                      prose max-w-none dark:prose-invert
                      prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-a:text-primary"
-          
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}

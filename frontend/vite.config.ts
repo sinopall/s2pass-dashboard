@@ -15,4 +15,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080", // Sesuaikan dengan port Backend Go kamu
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });

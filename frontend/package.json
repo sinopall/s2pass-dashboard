@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "cp -r node_modules/tinymce public/tinymce"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.15",
@@ -35,7 +36,8 @@
     "react-router": "^7.1.5",
     "react-toastify": "^11.0.5",
     "swiper": "^11.2.3",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "tinymce": "^8.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

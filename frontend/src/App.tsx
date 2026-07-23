@@ -16,6 +16,7 @@ import CreateScript from "./pages/Services/Script/CreateScript";
 import ScriptDetail from "./pages/Services/Script/ScriptDetail";
 import UserList from "./pages/User/UserList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminProducts from "./pages/Services/Product/AdminProducts";
 
 // ✅ TAMBAH INI
 import WarningPage from "./pages/Warning/WarningPage";
@@ -44,8 +45,14 @@ export default function App() {
             <Route index path="/" element={<Home />} />
             <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/services/categories" element={<CategoryPage />} />
-            <Route path="/knowledge-base/products/view/:id" element={<ProductDetail />} />
-            <Route path="/knowledge-base/scripts/view/:id" element={<ScriptDetail />} />
+            <Route
+              path="/knowledge-base/products/view/:id"
+              element={<ProductDetail />}
+            />
+            <Route
+              path="/knowledge-base/scripts/view/:id"
+              element={<ScriptDetail />}
+            />
 
             {/* ✅ WARNING PAGE */}
             <Route path="/warning" element={<WarningPage />} />
@@ -54,11 +61,27 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
               <Route path="/user-management" element={<UserList />} />
 
-              <Route path="/knowledge-base/products/create" element={<CreateProduct />} />
-              <Route path="/knowledge-base/products/edit/:id" element={<CreateProduct />} />
+              <Route
+                path="/knowledge-base/products/manage"
+                element={<AdminProducts />}
+              />
+              <Route
+                path="/knowledge-base/products/create"
+                element={<CreateProduct />}
+              />
+              <Route
+                path="/knowledge-base/products/edit/:id"
+                element={<CreateProduct />}
+              />
 
-              <Route path="/knowledge-base/scripts/create" element={<CreateScript />} />
-              <Route path="/knowledge-base/scripts/edit/:id" element={<CreateScript />} />
+              <Route
+                path="/knowledge-base/scripts/create"
+                element={<CreateScript />}
+              />
+              <Route
+                path="/knowledge-base/scripts/edit/:id"
+                element={<CreateScript />}
+              />
             </Route>
           </Route>
 

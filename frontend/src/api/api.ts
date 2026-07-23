@@ -12,7 +12,14 @@ export default {
   },
   products: {
     list: "/products",
+    create: "/products",
     detail: (id: number) => `/products/${id}`,
+    update: (id: number) => `/products/${id}`,
+    delete: (id: number) => `/products/${id}`,
+    updateStatus: (id: number) => `/products/${id}/status`,
+    attachments: (id: number) => `/products/${id}/attachments`,
+    attachmentsLink: (id: number) => `/products/${id}/attachments/link`,
+    deleteAttachment: (id: number) => `/products/attachments/${id}`,
   },
   scripts: {
     list: "/scripts",
@@ -21,5 +28,5 @@ export default {
   users: {
     list: "/users",
     detail: (id: number) => `/users/${id}`,
-  }
+  },
 };

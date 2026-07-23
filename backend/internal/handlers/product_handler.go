@@ -22,7 +22,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 	var q dto.ProductListQuery
 	_ = c.ShouldBindQuery(&q)
 
-	items, total, err := h.svc.List(c.Request.Context(), q.Q, q.CategoryID, q.Page, q.Limit)
+	items, total, err := h.svc.List(c.Request.Context(), q.Q, q.CategoryID, q.Page, q.Limit, q.Active)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -55,10 +55,16 @@ func (h *ProductHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
+// GetBySlugPublic - rute publik murni (dipakai untuk akses langsung via slug).
+// Produk yang berstatus nonaktif dianggap "tidak ada" di rute ini.
 func (h *ProductHandler) GetBySlugPublic(c *gin.Context) {
 	slug := c.Param("slug")
 	p, err := h.svc.GetBySlug(c.Request.Context(), slug)
 	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+	if !p.IsActive {
 		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
 	}
@@ -72,7 +78,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.Create(c.Request.Context(), req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
+	p, err := h.svc.Create(c.Request.Context(), req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.IsActive, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -89,7 +95,26 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		return
 	}
 
-	p, err := h.svc.Update(c.Request.Context(), id, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
+	p, err := h.svc.Update(c.Request.Context(), id, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.IsActive, req.Content)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, p)
+}
+
+// UpdateStatus - PATCH ringan khusus untuk toggle aktif/nonaktif dari list,
+// tanpa perlu submit ulang seluruh form produk.
+func (h *ProductHandler) UpdateStatus(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	var req dto.ProductStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+		return
+	}
+
+	p, err := h.svc.UpdateStatus(c.Request.Context(), id, req.IsActive)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

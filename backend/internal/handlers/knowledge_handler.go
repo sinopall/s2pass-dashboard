@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"s2pas-backend/internal/dto"
 	"s2pas-backend/internal/services"
-	"github.com/gin-gonic/gin"
 )
 
 type KnowledgeHandler struct {
@@ -18,7 +18,7 @@ func NewKnowledgeHandler(svc *services.KnowledgeService) *KnowledgeHandler {
 func (h *KnowledgeHandler) GetAll(c *gin.Context) {
 	// 1. Bind Query Params ke Struct
 	var req dto.KnowledgeListQuery
-	
+
 	// Bind otomatis membaca ?q=...&categoryId=...&page=...
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
@@ -32,9 +32,9 @@ func (h *KnowledgeHandler) GetAll(c *gin.Context) {
 	if req.Limit <= 0 {
 		req.Limit = 10
 	}
-    if req.Limit > 100 {
-        req.Limit = 100
-    }
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
 
 	result, err := h.svc.GetAll(c.Request.Context(), req)
 	if err != nil {

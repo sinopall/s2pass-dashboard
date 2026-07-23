@@ -60,14 +60,16 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Kategori", path: "/services/categories", pro: false },
       { name: "Knowledge Base", path: "/knowledge-base", pro: false },
+      { name: "Product Management", path: "/knowledge-base/products/manage", pro: false },
     ],
+    allowedRoles: ["admin"],
   },
 
   // ✅ TAMBAH MENU WARNING
   {
     icon: <WarningIcon />,
     name: "Motivation",
-    path: "/warning",
+    // path: "/warning",
   },
 
   {
@@ -103,12 +105,14 @@ const AppSidebar: React.FC = () => {
   }, [userRole]);
 
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
+    {},
+  );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
-    [location.pathname]
+    [location.pathname],
   );
 
   useEffect(() => {
@@ -161,9 +165,13 @@ const AppSidebar: React.FC = () => {
             <button
               onClick={() => handleSubmenuToggle(nav.name)}
               className={`menu-item group ${
-                openSubmenu === nav.name ? "menu-item-active" : "menu-item-inactive"
+                openSubmenu === nav.name
+                  ? "menu-item-active"
+                  : "menu-item-inactive"
               } cursor-pointer ${
-                !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
+                !isExpanded && !isHovered
+                  ? "lg:justify-center"
+                  : "lg:justify-start"
               }`}
             >
               <span
@@ -218,7 +226,9 @@ const AppSidebar: React.FC = () => {
               className="overflow-hidden transition-all duration-300 ease-in-out"
               style={{
                 height:
-                  openSubmenu === nav.name ? `${subMenuHeight[nav.name]}px` : "0px",
+                  openSubmenu === nav.name
+                    ? `${subMenuHeight[nav.name]}px`
+                    : "0px",
               }}
             >
               <ul className="mt-2 space-y-1 ml-9">
@@ -263,8 +273,8 @@ const AppSidebar: React.FC = () => {
           isExpanded || isMobileOpen
             ? "w-[290px]"
             : isHovered
-            ? "w-[290px]"
-            : "w-[90px]"
+              ? "w-[290px]"
+              : "w-[90px]"
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
@@ -295,7 +305,12 @@ const AppSidebar: React.FC = () => {
               <span className="text-xl font-bold text-[#00529c]">S2PAS</span>
             </>
           ) : (
-            <img src="/images/logo/bjb-logo.png" alt="Logo" width={32} height={32} />
+            <img
+              src="/images/logo/bjb-logo.png"
+              alt="Logo"
+              width={32}
+              height={32}
+            />
           )}
         </Link>
       </div>
@@ -305,7 +320,9 @@ const AppSidebar: React.FC = () => {
             <div>
               <h2
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (

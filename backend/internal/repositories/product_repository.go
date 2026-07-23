@@ -40,30 +40,44 @@ func (r *ProductRepository) SlugExists(ctx context.Context, slug string, exclude
 	return ok, err
 }
 
-func (r *ProductRepository) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, content any) (models.Product, error) {
+func (r *ProductRepository) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, isActive bool, content any) (models.Product, error) {
 	b, _ := json.Marshal(content)
 
 	var p models.Product
 	err := r.db.QueryRow(ctx, `
-		INSERT INTO products(title, slug, category_id, is_breaking, content)
-		VALUES ($1,$2,$3,$4,$5::jsonb)
-		RETURNING id,title,slug,category_id,is_breaking,content,created_at,updated_at
-	`, title, slug, categoryID, isBreaking, string(b)).
-		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt)
+		INSERT INTO products(title, slug, category_id, is_breaking, is_active, content)
+		VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+		RETURNING id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
+	`, title, slug, categoryID, isBreaking, isActive, string(b)).
+		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt)
 	return p, err
 }
 
-func (r *ProductRepository) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Product, error) {
+func (r *ProductRepository) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, isActive bool, content any) (models.Product, error) {
 	b, _ := json.Marshal(content)
 
 	var p models.Product
 	err := r.db.QueryRow(ctx, `
 		UPDATE products
-		SET title=$1, slug=$2, category_id=$3, is_breaking=$4, content=$5::jsonb, updated_at=NOW()
-		WHERE id=$6
-		RETURNING id,title,slug,category_id,is_breaking,content,created_at,updated_at
-	`, title, slug, categoryID, isBreaking, string(b), id).
-		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt)
+		SET title=$1, slug=$2, category_id=$3, is_breaking=$4, is_active=$5, content=$6::jsonb, updated_at=NOW()
+		WHERE id=$7
+		RETURNING id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
+	`, title, slug, categoryID, isBreaking, isActive, string(b), id).
+		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt)
+	return p, err
+}
+
+// UpdateStatus - partial update, dipakai untuk toggle cepat aktif/nonaktif
+// dari halaman list, tanpa perlu submit ulang seluruh form.
+func (r *ProductRepository) UpdateStatus(ctx context.Context, id int64, isActive bool) (models.Product, error) {
+	var p models.Product
+	err := r.db.QueryRow(ctx, `
+		UPDATE products
+		SET is_active=$1, updated_at=NOW()
+		WHERE id=$2
+		RETURNING id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
+	`, isActive, id).
+		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt)
 	return p, err
 }
 
@@ -75,23 +89,23 @@ func (r *ProductRepository) Delete(ctx context.Context, id int64) error {
 func (r *ProductRepository) GetByID(ctx context.Context, id int64) (models.Product, error) {
 	var p models.Product
 	err := r.db.QueryRow(ctx, `
-		SELECT id,title,slug,category_id,is_breaking,content,created_at,updated_at
+		SELECT id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
 		FROM products WHERE id=$1
-	`, id).Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt)
+	`, id).Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt)
 	return p, err
 }
 
 func (r *ProductRepository) GetBySlug(ctx context.Context, slug string) (models.Product, error) {
 	var p models.Product
 	err := r.db.QueryRow(ctx, `
-		SELECT id,title,slug,category_id,is_breaking,content,created_at,updated_at
+		SELECT id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
 		FROM products WHERE slug=$1
 	`, strings.ToLower(strings.TrimSpace(slug))).
-		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt)
+		Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt)
 	return p, err
 }
 
-func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64, page, limit int) ([]models.Product, int, error) {
+func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64, page, limit int, active *bool) ([]models.Product, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -114,6 +128,11 @@ func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64
 		args = append(args, categoryID)
 		argn++
 	}
+	if active != nil {
+		conds = append(conds, fmt.Sprintf("is_active=$%d", argn))
+		args = append(args, *active)
+		argn++
+	}
 
 	where := strings.Join(conds, " AND ")
 
@@ -124,7 +143,7 @@ func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64
 	}
 
 	listSQL := fmt.Sprintf(`
-		SELECT id,title,slug,category_id,is_breaking,content,created_at,updated_at
+		SELECT id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
 		FROM products
 		WHERE %s
 		ORDER BY updated_at DESC
@@ -142,7 +161,7 @@ func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64
 	out := []models.Product{}
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, p)
@@ -155,10 +174,11 @@ func (r *ProductRepository) Breaking(ctx context.Context, limit int) ([]models.P
 		limit = 10
 	}
 
+	// Breaking ticker cuma boleh nampilin produk yang masih aktif.
 	rows, err := r.db.Query(ctx, `
-		SELECT id,title,slug,category_id,is_breaking,content,created_at,updated_at
+		SELECT id,title,slug,category_id,is_breaking,is_active,content,created_at,updated_at
 		FROM products
-		WHERE is_breaking=TRUE
+		WHERE is_breaking=TRUE AND is_active=TRUE
 		ORDER BY updated_at DESC
 		LIMIT $1
 	`, limit)
@@ -170,7 +190,7 @@ func (r *ProductRepository) Breaking(ctx context.Context, limit int) ([]models.P
 	out := []models.Product{}
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Title, &p.Slug, &p.CategoryID, &p.IsBreaking, &p.IsActive, &p.Content, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, p)

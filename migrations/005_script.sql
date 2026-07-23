@@ -2,13 +2,17 @@
 
 CREATE TABLE IF NOT EXISTS scripts (
   id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Tambahan Baru
   title TEXT NOT NULL,
   slug TEXT NOT NULL,
   category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   is_breaking BOOLEAN NOT NULL DEFAULT FALSE,
-  content JSONB NOT NULL DEFAULT '{}'::jsonb,
+  content JSONB NOT NULL DEFAULT '{}'::jsonb, -- Tetap gunakan JSONB
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  
+  -- Pastikan 1 user hanya punya 1 script untuk 1 kategori tertentu (opsional tapi disarankan)
+  CONSTRAINT user_category_script_uq UNIQUE (user_id, category_id)
 );
 
 -- Basic Indexes

@@ -15,7 +15,7 @@ func NewKnowledgeService(repo *repositories.KnowledgeRepo) *KnowledgeService {
 }
 
 func (s *KnowledgeService) GetAll(ctx context.Context, req dto.KnowledgeListQuery) (*dto.KnowledgeListResponse, error) {
-	
+
 	items, total, err := s.repo.GetAll(ctx, req)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import PageMeta from "../../../components/common/PageMeta";
-import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
 import CategoryTableItem from "./CategoryTableItem";
 import { Category } from "./types";
@@ -34,7 +33,11 @@ export default function CategoryPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // HANDLER: Saat tombol (+) diklik (CREATE CHILD)
-  const handleAddChild = (parent: Category, rootType: string, ancestors: Category[]) => {
+  const handleAddChild = (
+    parent: Category,
+    rootType: string,
+    ancestors: Category[],
+  ) => {
     setModalMode("create");
     setModalParentData(parent);
     setModalRootType(rootType);
@@ -52,10 +55,14 @@ export default function CategoryPage() {
   };
 
   // HANDLER: EDIT CLICK
-  const handleEdit = (category: Category, rootType: string, ancestors: Category[]) => {
+  const handleEdit = (
+    category: Category,
+    rootType: string,
+    ancestors: Category[],
+  ) => {
     setModalMode("edit");
     setModalParentData(category); // target rename
-    setModalRootType(rootType);   // tipe root
+    setModalRootType(rootType); // tipe root
     setModalAncestors(ancestors); // path ancestors dari table recursion
     setIsModalOpen(true);
   };
@@ -82,7 +89,8 @@ export default function CategoryPage() {
       }
     } catch (err: any) {
       console.error("Gagal menyimpan kategori:", err);
-      const msg = err.response?.data?.message || "Terjadi kesalahan saat menyimpan data.";
+      const msg =
+        err.response?.data?.message || "Terjadi kesalahan saat menyimpan data.";
       setErrorMessage(msg);
     }
   };
@@ -103,7 +111,8 @@ export default function CategoryPage() {
       }
     } catch (err: any) {
       console.error("Gagal rename kategori:", err);
-      const msg = err.response?.data?.message || "Terjadi kesalahan saat update data.";
+      const msg =
+        err.response?.data?.message || "Terjadi kesalahan saat update data.";
       setErrorMessage(msg);
     }
   };
@@ -154,8 +163,10 @@ export default function CategoryPage() {
     if (storedData) {
       try {
         const user = JSON.parse(storedData);
-        setIsAdmin(user.role === 'admin');
-      } catch (e) { console.error(e); }
+        setIsAdmin(user.role === "admin");
+      } catch (e) {
+        console.error(e);
+      }
     }
   }, []);
 
@@ -183,23 +194,39 @@ export default function CategoryPage() {
       <div className="flex flex-col gap-5 md:gap-7 2xl:gap-10">
         {successMessage && (
           <div className="mb-4">
-            <Alert variant="success" title="Berhasil" message={successMessage} showLink={false} />
+            <Alert
+              variant="success"
+              title="Berhasil"
+              message={successMessage}
+              showLink={false}
+            />
           </div>
         )}
 
         {errorMessage && (
           <div className="mb-4">
-            <Alert variant="error" title="Gagal" message={errorMessage} showLink={false} />
+            <Alert
+              variant="error"
+              title="Gagal"
+              message={errorMessage}
+              showLink={false}
+            />
           </div>
         )}
 
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           {/* Header */}
           <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center border-b border-stroke dark:border-strokedark">
-            <h4 className="text-xl font-semibold text-black dark:text-white">Daftar Kategori</h4>
+            <h4 className="text-xl font-semibold text-black dark:text-white">
+              Daftar Kategori
+            </h4>
 
             {isAdmin && (
-              <Button size="sm" className="flex items-center gap-2" onClick={handleAddRoot}>
+              <Button
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={handleAddRoot}
+              >
                 <PlusIcon />
                 Tambah Kategori
               </Button>
@@ -209,7 +236,12 @@ export default function CategoryPage() {
           {/* Error Message */}
           {error && (
             <div className="p-6 pb-0">
-              <Alert variant="error" title="Error" message={error} showLink={false} />
+              <Alert
+                variant="error"
+                title="Error"
+                message={error}
+                showLink={false}
+              />
             </div>
           )}
 
@@ -230,7 +262,7 @@ export default function CategoryPage() {
                         Aksi
                       </th>
                     </>
-                  )}    
+                  )}
                 </tr>
               </thead>
 

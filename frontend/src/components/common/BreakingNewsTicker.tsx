@@ -24,11 +24,12 @@ export default function BreakingNewsTicker() {
       const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
       return tb - ta;
     });
-    return sorted.length ? [...sorted, ...sorted] : [];
+    return sorted.length ? [...sorted, ...sorted, ...sorted, ...sorted] : [];
   }, [items]);
 
   const goDetail = (it: BreakingItem) => {
-    if (it.type === "product") navigate(`/knowledge-base/products/view/${it.id}`);
+    if (it.type === "product")
+      navigate(`/knowledge-base/products/view/${it.id}`);
     else navigate(`/knowledge-base/scripts/view/${it.id}`);
   };
 
@@ -63,9 +64,12 @@ export default function BreakingNewsTicker() {
           type: "script" as const,
         }));
 
-        const combined = [...prodItems, ...scrItems].filter((x) => x.is_breaking);
+        const combined = [...prodItems, ...scrItems].filter(
+          (x) => x.is_breaking,
+        );
         setItems(combined);
-      } catch (e) {
+      } catch (error: any) {
+        console.error("Gagal load breaking:", error);
         setItems([]);
       } finally {
         setLoading(false);
@@ -105,7 +109,6 @@ export default function BreakingNewsTicker() {
              - Kolom 2 (Marquee): Ambil sisa ruang, TAPI bisa mengecil sampai 0 ("minmax(0, 1fr)") 
       */}
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-4 py-2">
-        
         {/* Kolom 1: Label Breaking */}
         <span className="shrink-0 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white z-10">
           BREAKING
@@ -117,7 +120,7 @@ export default function BreakingNewsTicker() {
           <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
           <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
 
-          <div className="s2pass-marquee gap-3">
+          <div className="s2pass-marquee">
             {/* Render 2 set item agar looping mulus (A B C A B C) */}
             {merged.map((it, idx) => (
               <button
@@ -133,7 +136,7 @@ export default function BreakingNewsTicker() {
                 <span className="whitespace-nowrap">{it.title}</span>
               </button>
             ))}
-             {/* Note: Logic duplikasi item sudah ada di useMemo 'merged', 
+            {/* Note: Logic duplikasi item sudah ada di useMemo 'merged', 
                  jadi map di atas sudah merender list ganda. 
                  Pastikan animation keyframes translateX(-50%) atau -100% disesuaikan dengan panjang konten.
                  Biasanya -50% jika kita menduplikasi listnya 2x (total width 200%).

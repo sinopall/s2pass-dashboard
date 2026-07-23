@@ -2,9 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import axios from "../../../api/axios";
 import API from "../../../api/api";
-import { flattenCategoryTree, CategoryNode, FlatCategory } from "../../../utils/categoryUtils";
+import {
+  flattenCategoryTree,
+  CategoryNode,
+  FlatCategory,
+} from "../../../utils/categoryUtils";
 import Button from "../../../components/ui/button/Button";
-import { PencilIcon, TrashBinIcon, PlusIcon, ChevronDownIcon } from "../../../icons";
+import {
+  PencilIcon,
+  TrashBinIcon,
+  PlusIcon,
+  ChevronDownIcon,
+} from "../../../icons";
+import CategoryTreeSelect from "../../../components/form/CategoryTreeSelect";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/ui/modal/ConfirmationModal";
 
@@ -15,6 +25,7 @@ interface Product {
   slug: string;
   category_id: number;
   is_breaking: boolean;
+  is_active: boolean;
   updated_at: string;
 }
 
@@ -32,7 +43,11 @@ const EyeIcon = ({ className = "" }: { className?: string }) => (
       strokeLinejoin="round"
       d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
     />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
   </svg>
 );
 
@@ -52,8 +67,12 @@ export default function ProductList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCatId, setSelectedCatId] = useState<number>(0);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [totalData, setTotalData] = useState(0);
 
   // Category Data State
@@ -70,7 +89,7 @@ export default function ProductList() {
     if (storedData) {
       try {
         const user = JSON.parse(storedData);
-        setIsAdmin(user.role === 'admin');
+        setIsAdmin(user.role === "admin");
       } catch (e) {
         console.error("Error parsing user data", e);
       }
@@ -112,12 +131,14 @@ export default function ProductList() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const params = {
+      const params: Record<string, any> = {
         page: page,
         limit: limit,
         q: debouncedSearch,
         categoryId: selectedCatId,
       };
+      if (statusFilter === "active") params.active = true;
+      if (statusFilter === "inactive") params.active = false;
 
       const response = await axios.get(API.products.list, { params });
       setProducts(response.data.items);
@@ -132,7 +153,33 @@ export default function ProductList() {
 
   useEffect(() => {
     fetchProducts();
-  }, [page, limit, debouncedSearch, selectedCatId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, debouncedSearch, selectedCatId, statusFilter]);
+
+  console.log("Error:", error);
+
+  // --- TOGGLE STATUS ---
+  const handleToggleStatus = async (product: Product) => {
+    setTogglingId(product.id);
+    const nextStatus = !product.is_active;
+    try {
+      await axios.patch(API.products.updateStatus(product.id), {
+        is_active: nextStatus,
+      });
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, is_active: nextStatus } : p,
+        ),
+      );
+      toast.success(
+        nextStatus ? "Produk diaktifkan kembali" : "Produk dinonaktifkan",
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Gagal mengubah status produk");
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   // --- DELETE ---
   const confirmDeleteProduct = async () => {
@@ -154,12 +201,6 @@ export default function ProductList() {
     setIsDeleteModalOpen(false);
     setDeleteTargetId(null);
     fetchProducts();
-  };
-
-  // --- FILTER ---
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCatId(Number(e.target.value));
-    setPage(1);
   };
 
   return (
@@ -196,20 +237,31 @@ export default function ProductList() {
                 />
               </div>
 
-              {/* Dropdown */}
-              <div className="relative w-full sm:w-64">
+              {/* Dropdown kategori — searchable, tetap tampil sebagai tree */}
+              <CategoryTreeSelect
+                categories={flatCategories}
+                value={selectedCatId}
+                onChange={(id) => {
+                  setSelectedCatId(id);
+                  setPage(1);
+                }}
+              />
+
+              {/* Filter status aktif/nonaktif */}
+              <div className="relative w-full sm:w-44">
                 <select
-                  value={selectedCatId}
-                  onChange={handleCategoryChange}
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(
+                      e.target.value as "all" | "active" | "inactive",
+                    );
+                    setPage(1);
+                  }}
                   className="w-full appearance-none bg-transparent pl-4 pr-10 py-2 border border-stroke rounded-lg outline-none focus:border-primary dark:border-strokedark dark:bg-meta-4 cursor-pointer"
                 >
-                  <option value="0">Semua Kategori</option>
-                  {flatCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {"\u00A0".repeat(cat.depth * 4)}
-                      {cat.name}
-                    </option>
-                  ))}
+                  <option value="all">Semua Status</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Nonaktif</option>
                 </select>
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <ChevronDownIcon className="w-4 h-4" />
@@ -220,7 +272,9 @@ export default function ProductList() {
             {/* Tambah */}
             {isAdmin && (
               <div className="w-full md:w-auto flex justify-end">
-                <Button onClick={() => navigate("/knowledge-base/products/create")}>
+                <Button
+                  onClick={() => navigate("/knowledge-base/products/create")}
+                >
                   <span className="flex items-center gap-2">
                     <PlusIcon /> Tambah Produk
                   </span>
@@ -239,10 +293,17 @@ export default function ProductList() {
                   <th className="py-4 px-4 font-medium text-black dark:text-white xl:pl-11 w-[50px]">
                     No
                   </th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Info Produk</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Kategori</th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white">
+                    Info Produk
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white">
+                    Kategori
+                  </th>
                   <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
                     Status
+                  </th>
+                  <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
+                    Aktif?
                   </th>
                   {isAdmin && (
                     <>
@@ -251,20 +312,19 @@ export default function ProductList() {
                       </th>
                     </>
                   )}
-                  
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-10">
+                    <td colSpan={6} className="text-center py-10">
                       Memuat data...
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-10 text-gray-500">
+                    <td colSpan={6} className="text-center py-10 text-gray-500">
                       Data tidak ditemukan.
                     </td>
                   </tr>
@@ -272,24 +332,38 @@ export default function ProductList() {
                   products.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/knowledge-base/products/view/${item.id}`)}
+                      className={`hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors cursor-pointer ${
+                        !item.is_active ? "opacity-60" : ""
+                      }`}
+                      onClick={() =>
+                        navigate(`/knowledge-base/products/view/${item.id}`)
+                      }
                     >
                       <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
-                        <span className="text-gray-500">#{(page - 1) * limit + index + 1}</span>
+                        <span className="text-gray-500">
+                          #{(page - 1) * limit + index + 1}
+                        </span>
                       </td>
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                        <h5 className="font-semibold text-black dark:text-white">{item.title}</h5>
-                        <p className="text-xs text-gray-500 font-mono mt-0.5">/{item.slug}</p>
+                        <h5 className="font-semibold text-black dark:text-white">
+                          {item.title}
+                        </h5>
+                        <p className="text-xs text-gray-500 font-mono mt-0.5">
+                          /{item.slug}
+                        </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          Update: {new Date(item.updated_at).toLocaleDateString("id-ID")}
+                          Update:{" "}
+                          {new Date(item.updated_at).toLocaleDateString(
+                            "id-ID",
+                          )}
                         </p>
                       </td>
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                         <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          {categoryMap[item.category_id] || `ID: ${item.category_id}`}
+                          {categoryMap[item.category_id] ||
+                            `ID: ${item.category_id}`}
                         </span>
                       </td>
 
@@ -305,6 +379,47 @@ export default function ProductList() {
                         )}
                       </td>
 
+                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.is_active}
+                            disabled={!isAdmin || togglingId === item.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleStatus(item);
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              item.is_active
+                                ? "bg-emerald-500"
+                                : "bg-gray-300 dark:bg-gray-600"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                                item.is_active
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                          <span
+                            className={`text-[11px] font-semibold ${
+                              item.is_active
+                                ? "text-emerald-600"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            {togglingId === item.id
+                              ? "..."
+                              : item.is_active
+                                ? "Aktif"
+                                : "Nonaktif"}
+                          </span>
+                        </div>
+                      </td>
+
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                         <div className="flex items-center justify-end gap-2 pr-4">
                           {isAdmin && (
@@ -312,7 +427,9 @@ export default function ProductList() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/knowledge-base/products/view/${item.id}`);
+                                  navigate(
+                                    `/knowledge-base/products/view/${item.id}`,
+                                  );
                                 }}
                                 className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
                                 title="Lihat Detail"
@@ -323,7 +440,9 @@ export default function ProductList() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/knowledge-base/products/edit/${item.id}`);
+                                  navigate(
+                                    `/knowledge-base/products/edit/${item.id}`,
+                                  );
                                 }}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
                                 title="Edit"

@@ -1,69 +1,32 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router";
 import PageMeta from "../../../components/common/PageMeta";
 import ProductList from "../Product/ProductList";
-import ScriptList from "../Script/ScriptList";
 import KnowledgeList from "./KnowledgeList";
 
 export default function KnowledgeBasePage() {
-  const location = useLocation();
-  const initialTab = location.state?.activeTab || 'product';
-  const [activeTab, setActiveTab] = useState<'product' | 'script'>(initialTab);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-    }
-  }, [location.state]);
 
   useEffect(() => {
     const stored = localStorage.getItem("user_data");
     if (stored) {
-        const user = JSON.parse(stored);
-        setIsAdmin(user.role === 'admin');
+      const user = JSON.parse(stored);
+      setIsAdmin(user.role === "admin");
     }
   }, []);
 
   return (
     <>
-      <PageMeta
-        title="Knowledge Base | S2PAS"
-        description=""
-      />
-      {isAdmin ? (
-        <>
-          <div className="mb-6 flex gap-4 border-b border-stroke dark:border-strokedark bg-white dark:bg-boxdark px-4 pt-4 rounded-t-sm">
-            <button
-              onClick={() => setActiveTab('product')}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition ${
-                activeTab === 'product' ? 'border-primary text-primary' : 'border-transparent text-gray-500'
-              }`}
-            >
-              Produk Layanan
-            </button>
-            <button
-              onClick={() => setActiveTab('script')}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition ${
-                activeTab === 'script' ? 'border-primary text-primary' : 'border-transparent text-gray-500'
-              }`}
-            >
-              Script Agent
-            </button>
-          </div>
+      <PageMeta title="Knowledge Base | S2PAS" description="" />
 
-          {/* Content */}
-          <div className="animate-in fade-in duration-300">
-            {activeTab === 'product' ? <ProductList /> : <ScriptList />}
-          </div>
-        </>
-      ): (
+      {isAdmin ? (
+        <div className="animate-in fade-in duration-300">
+          <ProductList />
+        </div>
+      ) : (
         <div className="animate-in fade-in duration-300">
           <KnowledgeList />
-         </div>
+        </div>
       )}
-      {/* Tab Header */}
-      
     </>
   );
 }

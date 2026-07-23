@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 interface UserData {
   id: number;
@@ -11,7 +11,7 @@ interface UserData {
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const storedData = localStorage.getItem("user_data");
@@ -33,11 +33,11 @@ export default function UserDropdown() {
     setIsOpen(false);
   }
 
-  function handleLogout() {
-    localStorage.removeItem("user_data");
-    localStorage.removeItem("access_token");
-    navigate("/signin");
-  }
+  // function handleLogout() {
+  //   localStorage.removeItem("user_data");
+  //   localStorage.removeItem("access_token");
+  //   navigate("/signin");
+  // }
   return (
     <div className="relative">
       <button

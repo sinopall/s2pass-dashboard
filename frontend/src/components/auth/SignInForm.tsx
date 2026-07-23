@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import { toast } from "react-toastify";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
 import Alert from "../ui/alert/Alert";
-import axios from "../../api/axios"; 
+import axios from "../../api/axios";
 import API from "../../api/api";
 
 const Spinner = () => (
@@ -40,36 +40,45 @@ export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const reason = sessionStorage.getItem("auth_redirect_reason");
+    if (reason) {
+      toast.error(reason);
+      sessionStorage.removeItem("auth_redirect_reason");
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     const loginPromise = axios.post(API.auth.login, {
-        username: username,
-        password: password
+      username: username,
+      password: password,
     });
 
     try {
-      const response = await toast.promise(
-        loginPromise,
-        {
-          pending: 'Sedang masuk...',
-          success: 'Login berhasil!',
-          error: {
-            render({ data }: any) {
-              return data.response?.data?.message || "Username atau password salah";
-            }
-          }
-        }
-      );
+      const response = await toast.promise(loginPromise, {
+        pending: "Sedang masuk...",
+        success: "Login berhasil!",
+        error: {
+          render({ data }: any) {
+            setError(
+              data.response?.data?.message || "Username atau password salah",
+            );
+            return (
+              data.response?.data?.message || "Username atau password salah"
+            );
+          },
+        },
+      });
       const { access_token, user } = response.data;
       if (access_token) {
         localStorage.setItem("access_token", access_token);
         localStorage.setItem("user_data", JSON.stringify(user));
-        navigate("/"); 
+        navigate("/");
       } else {
         toast.error("Token tidak diterima dari server.");
       }
-
     } catch (err: any) {
       console.error("Login Error:", err);
     } finally {
@@ -115,8 +124,8 @@ export default function SignInForm() {
                   <Label>
                     Username <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input 
-                    placeholder="Username" 
+                  <Input
+                    placeholder="Username"
                     value={username}
                     onChange={(e: any) => setUsername(e.target.value)}
                     required
@@ -147,8 +156,8 @@ export default function SignInForm() {
                   </div>
                 </div>
                 <div>
-                  <Button 
-                    className="w-full flex justify-center items-center gap-2" 
+                  <Button
+                    className="w-full flex justify-center items-center gap-2"
                     size="sm"
                     disabled={isLoading}
                   >

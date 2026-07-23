@@ -11,6 +11,7 @@ type Product struct {
 	Slug       string          `json:"slug"`
 	CategoryID int64           `json:"category_id"`
 	IsBreaking bool            `json:"is_breaking"`
+	IsActive   bool            `json:"is_active"`
 	Content    json.RawMessage `json:"content"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`

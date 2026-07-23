@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"context"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"s2pas-backend/internal/dto"
-    "github.com/jackc/pgx/v5/pgxpool"
 )
 
 type KnowledgeRepo struct {
@@ -17,7 +17,7 @@ func NewKnowledgeRepo(db *pgxpool.Pool) *KnowledgeRepo {
 func (r *KnowledgeRepo) GetAll(ctx context.Context, req dto.KnowledgeListQuery) ([]dto.KnowledgeItem, int, error) {
 	offset := (req.Page - 1) * req.Limit
 	searchPattern := "%" + req.Q + "%"
-	
+
 	query := `
 		SELECT p.id, p.title, p.slug, 'product' as type, c.name as category_name, p.updated_at
 		FROM products p
@@ -66,7 +66,7 @@ func (r *KnowledgeRepo) GetAll(ctx context.Context, req dto.KnowledgeListQuery) 
               AND ($2 = 0 OR s.category_id = $2)
 		) as total_count
 	`
-	
+
 	var total int
 	if err := r.db.QueryRow(ctx, countQuery, searchPattern, req.CategoryID).Scan(&total); err != nil {
 		total = 0

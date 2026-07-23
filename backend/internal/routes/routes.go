@@ -27,15 +27,22 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	productSvc := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productSvc)
 
-	scriptRepo := repositories.NewScriptRepository(db)
-    scriptSvc := services.NewScriptService(scriptRepo)
-    scriptHandler := handlers.NewScriptHandler(scriptSvc)
-
-	knowRepo := repositories.NewKnowledgeRepo(db)
-	knowSvc := services.NewKnowledgeService(knowRepo)
-	knowHandler := handlers.NewKnowledgeHandler(knowSvc)
+	// product attachments
+	attachmentRepo := repositories.NewProductAttachmentRepository(db)
+	attachmentHandler := handlers.NewProductAttachmentHandler(attachmentRepo)
 
 	uploadH := handlers.NewUploadHandler()
+	docxImportH := handlers.NewDocxImportHandler()
+
+	// scripts
+	scriptRepo := repositories.NewScriptRepository(db)
+	scriptSvc := services.NewScriptService(scriptRepo)
+	scriptH := handlers.NewScriptHandler(scriptSvc)
+
+	// knowledge base
+	knowledgeRepo := repositories.NewKnowledgeRepo(db)
+	knowledgeSvc := services.NewKnowledgeService(knowledgeRepo)
+	knowledgeH := handlers.NewKnowledgeHandler(knowledgeSvc)
 
 	api := r.Group("/api")
 
@@ -47,6 +54,7 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	protected.Use(middlewares.AuthMiddleware(cfg.JWTSecret))
 	protected.GET("/auth/me", authH.Me)
 	protected.POST("/uploads", uploadH.Upload)
+	protected.POST("/docx/import", docxImportH.Import)
 
 	// Admin only
 	admin := protected.Group("")
@@ -56,37 +64,40 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	admin.PUT("/users/:id", userH.Update)
 	admin.DELETE("/users/:id", userH.Delete)
 
-	// Categories: tree/children bisa dibuka untuk agent juga (read-only)
+	// Categories
 	protected.GET("/categories/tree", catH.Tree)
 	protected.GET("/categories/children", catH.Children)
-
-	// Admin category write
 	admin.POST("/categories/path", catH.UpsertPath)
 	admin.PUT("/categories/:id", catH.Rename)
 	admin.DELETE("/categories/:id", catH.Delete)
 	protected.GET("/categories/path", catH.Path)
 
-	// public
-	// public product
+	// Products
 	api.GET("/products", productHandler.List)
 	api.GET("/products/breaking", productHandler.Breaking)
 	api.GET("/products/:id", productHandler.Get)
 	api.GET("/public/:slug", productHandler.GetBySlugPublic)
 
-	// protected product
 	admin.POST("/products", productHandler.Create)
 	admin.PUT("/products/:id", productHandler.Update)
+	admin.PATCH("/products/:id/status", productHandler.UpdateStatus)
 	admin.DELETE("/products/:id", productHandler.Delete)
 
-	// public script
-	api.GET("/scripts", scriptHandler.List)
-    api.GET("/scripts/:id", scriptHandler.Get)
-	
-	// protected script
-	admin.POST("/scripts", scriptHandler.Create)
-	admin.PUT("/scripts/:id", scriptHandler.Update) 
-    admin.DELETE("/scripts/:id", scriptHandler.Delete)
+	// Product attachments
+	protected.GET("/products/:id/attachments", attachmentHandler.List)
+	admin.POST("/products/:id/attachments", attachmentHandler.Upload)
+	admin.POST("/products/:id/attachments/link", attachmentHandler.LinkExisting)
+	admin.DELETE("/products/attachments/:attachmentId", attachmentHandler.Delete)
 
-	// public product and script
-	api.GET("/knowledge-base/all", knowHandler.GetAll)
+	// Scripts
+	api.GET("/scripts", scriptH.List)
+	api.GET("/scripts/:id", scriptH.Get)
+	protected.GET("/scripts/my-script", scriptH.GetMy)
+	protected.PUT("/scripts/my-script", scriptH.UpsertMy)
+	admin.POST("/scripts", scriptH.Create)
+	admin.PUT("/scripts/:id", scriptH.Update)
+	admin.DELETE("/scripts/:id", scriptH.Delete)
+
+	// Knowledge base (gabungan Products + Scripts, buat search global)
+	protected.GET("/knowledge-base/all", knowledgeH.GetAll)
 }
