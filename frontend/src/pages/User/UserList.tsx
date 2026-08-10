@@ -41,12 +41,10 @@ export default function UserList() {
   // Filter & Pagination State
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedRole, setSelectedRole] = useState("agent");
+  const [selectedRole, setSelectedRole] = useState("");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [totalData, setTotalData] = useState(0);
-
-  setLimit(10); // Default limit, bisa diubah sesuai kebutuhan
 
   const openDeleteModal = (id: number) => {
     setDeleteTargetId(id);

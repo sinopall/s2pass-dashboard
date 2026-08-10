@@ -127,7 +127,7 @@ export default function ProductDetail() {
               {isAdmin && (
                 <Button
                   onClick={() =>
-                    navigate(`/knowledge-base/products/edit/${product.id}`)
+                    navigate(`/products/edit/${product.id}`)
                   }
                 >
                   <PencilIcon className="w-4 h-4 mr-2" /> Edit Produk

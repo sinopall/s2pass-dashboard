@@ -27,7 +27,10 @@ func (h *ScriptHandler) Create(c *gin.Context) {
 		return
 	}
 
-	script, err := h.svc.Create(c.Request.Context(), req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
+	authUser, _ := c.Get(middlewares.CtxUserKey)
+	user := authUser.(middlewares.AuthUser)
+
+	script, err := h.svc.Create(c.Request.Context(), user.ID, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

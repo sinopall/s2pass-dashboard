@@ -31,7 +31,6 @@ export interface ContentFormValues {
   slug: string;
   category_id: number;
   is_breaking: boolean;
-  is_active: boolean;
   content: { tabs: TabItem[] };
 }
 
@@ -121,11 +120,17 @@ const AccordionArray = ({
                     value={field.value}
                     onEditorChange={(content) => field.onChange(content)}
                     init={{
-                      height: 700,
+                      // Tinggi awal pendek, otomatis mengikuti konten (autoresize),
+                      // dan dibatasi max_height supaya tidak kepanjangan kalau
+                      // kontennya banyak (nanti scroll internal di dalam editor).
+                      min_height: 200,
+                      max_height: 550,
+                      autoresize_bottom_margin: 16,
                       menubar: true, // Tampilkan menu bar agar akses ke Tabel lebih lengkap
                       plugins: [
                         "advlist",
                         "autolink",
+                        "autoresize",
                         "lists",
                         "link",
                         "image",
@@ -200,7 +205,6 @@ export default function ContentForm({
     slug: "",
     category_id: 1,
     is_breaking: false,
-    is_active: true,
     content: {
       tabs: [
         {
@@ -500,54 +504,6 @@ export default function ContentForm({
               </span>
             </div>
           </div>
-
-          {/* STATUS AKTIF / NONAKTIF */}
-          <Controller
-            name="is_active"
-            control={control}
-            render={({ field }) => (
-              <div className="flex items-center justify-between gap-3 p-4 bg-white border border-stroke rounded dark:bg-boxdark dark:border-strokedark">
-                <div className="flex flex-col">
-                  <span className="font-medium text-black dark:text-white">
-                    Status Produk
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    Produk nonaktif tidak akan muncul di pencarian & daftar
-                    untuk agent, tapi tetap bisa dikelola di sini.
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <span
-                    className={`text-sm font-semibold ${
-                      field.value
-                        ? "text-emerald-600"
-                        : "text-gray-400 dark:text-gray-500"
-                    }`}
-                  >
-                    {field.value ? "Aktif" : "Nonaktif"}
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={field.value}
-                    onClick={() => field.onChange(!field.value)}
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 ${
-                      field.value
-                        ? "bg-emerald-500"
-                        : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                        field.value ? "translate-x-8" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
-          />
         </div>
       </div>
 
@@ -565,7 +521,7 @@ export default function ContentForm({
           <button
             type="button"
             onClick={() => append({ title: "Tab Baru", accordions: [] })}
-            className="text-sm bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded shadow-sm hover:bg-blue-50 transition-colors flex items-center gap-2"
+            className="text-sm bg-primary text-white px-4 py-2 rounded shadow hover:bg-opacity-90 flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4 fill-current" /> Tambah Tab
           </button>
@@ -577,7 +533,7 @@ export default function ContentForm({
               key={tab.id}
               className="p-6 border-2 border-dashed border-gray-300 rounded-xl dark:border-strokedark hover:border-primary/50 transition-colors"
             >
-              <div className="flex flex-row justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-strokedark gap-4">
+              <div className="flex flex-row justify-between items-end mb-6 pb-4 border-b border-gray-200 dark:border-strokedark gap-4">
                 <div className="flex-grow min-w-0">
                   <Label className="text-sm font-bold text-primary mb-1 uppercase tracking-wide">
                     Judul Tab #{index + 1}
@@ -593,7 +549,7 @@ export default function ContentForm({
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="shrink-0 inline-flex items-center gap-2 bg-white text-red-500 hover:text-white hover:bg-red-500 border border-red-300 px-3 py-2 rounded-lg transition-all text-sm font-medium"
+                  className="shrink-0 inline-flex items-center gap-2 bg-white text-red-500 hover:text-white hover:bg-red-500 border border-red-300 px-3 py-3 rounded-lg transition-all text-sm font-medium"
                 >
                   <TrashBinIcon className="w-4 h-4" />
                   <span>Hapus Tab Ini</span>

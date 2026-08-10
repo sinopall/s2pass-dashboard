@@ -23,7 +23,7 @@ func NewScriptRepository(db *pgxpool.Pool) *ScriptRepository {
 // Cek validasi kategori (Logic sama: harus ada dan bukan root)
 func (r *ScriptRepository) CategoryExists(ctx context.Context, id int64) (bool, error) {
 	var ok bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM categories WHERE id=$1 AND parent_id IS NOT NULL)`, id).Scan(&ok)
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM categories WHERE id=$1 AND (parent_id IS NOT NULL OR id IN (2, 3)))`, id).Scan(&ok)
 	return ok, err
 }
 
@@ -43,16 +43,16 @@ func (r *ScriptRepository) SlugExists(ctx context.Context, slug string, excludeI
 	return ok, err
 }
 
-func (r *ScriptRepository) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (r *ScriptRepository) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
 	b, _ := json.Marshal(content)
 
 	var s models.Script
 	err := r.db.QueryRow(ctx, `
-        INSERT INTO scripts(title, slug, category_id, is_breaking, content)
-        VALUES ($1,$2,$3,$4,$5::jsonb)
-        RETURNING id,title,slug,category_id,is_breaking,content,created_at,updated_at
-    `, title, slug, categoryID, isBreaking, string(b)).
-		Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
+        INSERT INTO scripts(user_id, title, slug, category_id, is_breaking, content)
+        VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+        RETURNING id,user_id,title,slug,category_id,is_breaking,content,created_at,updated_at
+    `, userID, title, slug, categoryID, isBreaking, string(b)).
+		Scan(&s.ID, &s.UserID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
 	return s, err
 }
 

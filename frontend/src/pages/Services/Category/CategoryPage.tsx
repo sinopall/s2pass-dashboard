@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PageMeta from "../../../components/common/PageMeta";
 import Button from "../../../components/ui/button/Button";
 import CategoryTableItem from "./CategoryTableItem";
@@ -31,6 +31,88 @@ export default function CategoryPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // ==================== SEARCH -> JUMP TO PRODUCT ====================
+  interface ProductSearchResult {
+    id: number;
+    title: string;
+    category_id: number;
+  }
+
+  const [searchQ, setSearchQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [searchResults, setSearchResults] = useState<ProductSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // Set berisi id kategori (root..leaf) yang harus di-force-expand
+  const [expandIds, setExpandIds] = useState<Set<number> | null>(null);
+  // id produk yang sedang jadi target highlight + auto-scroll
+  const [highlightProductId, setHighlightProductId] = useState<number | null>(
+    null,
+  );
+  // nonce -> supaya effect scroll tetap ke-trigger walau user pilih ulang produk yang sama
+  const [highlightNonce, setHighlightNonce] = useState(0);
+
+  // debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(searchQ.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQ]);
+
+  // fetch produk yang cocok
+  useEffect(() => {
+    if (!debouncedQ) {
+      setSearchResults([]);
+      return;
+    }
+    (async () => {
+      setSearchLoading(true);
+      try {
+        const res = await axios.get(API.products.list, {
+          params: { q: debouncedQ, page: 1, limit: 8 },
+        });
+        setSearchResults(res.data?.items || []);
+      } catch (err) {
+        console.error("Gagal search produk:", err);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    })();
+  }, [debouncedQ]);
+
+  // tutup dropdown search saat klik di luar
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (!searchBoxRef.current) return;
+      if (!searchBoxRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  // klik salah satu hasil search -> ambil jalur kategori root..leaf -> expand + highlight
+  const handlePickSearchResult = async (product: ProductSearchResult) => {
+    setSearchOpen(false);
+    setSearchQ(product.title);
+
+    try {
+      const res = await axios.get(API.categories.path, {
+        params: { leafId: product.category_id },
+      });
+      const path: Category[] = res.data || [];
+      setExpandIds(new Set(path.map((c) => c.id)));
+      setHighlightProductId(product.id);
+      setHighlightNonce((n) => n + 1);
+    } catch (err) {
+      console.error("Gagal ambil jalur kategori:", err);
+    }
+  };
+  // =====================================================================
 
   // HANDLER: Saat tombol (+) diklik (CREATE CHILD)
   const handleAddChild = (
@@ -216,21 +298,80 @@ export default function CategoryPage() {
 
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           {/* Header */}
-          <div className="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between items-center border-b border-stroke dark:border-strokedark">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
+          <div className="py-6 px-4 md:px-6 xl:px-7.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-stroke dark:border-strokedark">
+            <h4 className="text-xl font-semibold text-black dark:text-white shrink-0">
               Daftar Kategori
             </h4>
 
-            {isAdmin && (
-              <Button
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={handleAddRoot}
-              >
-                <PlusIcon />
-                Tambah Kategori
-              </Button>
-            )}
+            <div className="flex items-center gap-3 flex-1 md:justify-end">
+              {/* Search jump-to-product */}
+              <div ref={searchBoxRef} className="relative w-full max-w-xs">
+                <input
+                  type="text"
+                  value={searchQ}
+                  onChange={(e) => {
+                    setSearchQ(e.target.value);
+                    setSearchOpen(true);
+                  }}
+                  onFocus={() => setSearchOpen(true)}
+                  placeholder="Cari produk, langsung buka lokasinya..."
+                  className="w-full rounded-lg border border-stroke bg-white pl-4 pr-9 py-2.5 text-sm outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M21 21l-4-4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+
+                {searchOpen && searchQ.trim() && (
+                  <div className="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-stroke bg-white shadow-lg dark:border-strokedark dark:bg-boxdark">
+                    {searchLoading ? (
+                      <div className="px-4 py-3 text-xs text-gray-400">
+                        Mencari...
+                      </div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="px-4 py-3 text-xs text-gray-400">
+                        Tidak ada produk yang cocok.
+                      </div>
+                    ) : (
+                      searchResults.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handlePickSearchResult(p)}
+                          className="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-meta-4 transition"
+                        >
+                          {p.title}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2 shrink-0"
+                  onClick={handleAddRoot}
+                >
+                  <PlusIcon />
+                  Tambah Kategori
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Error Message */}
@@ -284,6 +425,9 @@ export default function CategoryPage() {
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       isAdmin={isAdmin}
+                      expandIds={expandIds}
+                      highlightProductId={highlightProductId}
+                      highlightNonce={highlightNonce}
                     />
                   ))
                 ) : (

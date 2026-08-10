@@ -83,14 +83,18 @@ export default function ScriptDetail() {
           return;
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("Error reading from sessionStorage:", error);
+    }
 
     // 3) fallback aman (hindari navigate(-1) yang bisa no-op)
-    navigate("/knowledge-base", { state: { activeTab: "script" } });
+    navigate("/products", { state: { activeTab: "script" } });
   };
 
-  if (loading) return <div className="p-10 text-center">Memuat detail script...</div>;
-  if (!script) return <div className="p-10 text-center">Script tidak ditemukan.</div>;
+  if (loading)
+    return <div className="p-10 text-center">Memuat detail script...</div>;
+  if (!script)
+    return <div className="p-10 text-center">Script tidak ditemukan.</div>;
 
   return (
     <>
@@ -122,12 +126,20 @@ export default function ScriptDetail() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleBackToDashboard} type="button">
+              <Button
+                variant="outline"
+                onClick={handleBackToDashboard}
+                type="button"
+              >
                 Kembali
               </Button>
 
               {isAdmin && (
-                <Button onClick={() => navigate(`/knowledge-base/scripts/edit/${script.id}`)}>
+                <Button
+                  onClick={() =>
+                    navigate(`/scripts/edit/${script.id}`)
+                  }
+                >
                   <PencilIcon className="w-4 h-4 mr-2" />
                   Edit Script
                 </Button>
@@ -139,7 +151,9 @@ export default function ScriptDetail() {
         {/* PREVIEW CONTENT (TABS & ACCORDION) */}
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke py-4 px-6 dark:border-strokedark">
-            <h3 className="font-semibold text-black dark:text-white">Konten Script</h3>
+            <h3 className="font-semibold text-black dark:text-white">
+              Konten Script
+            </h3>
           </div>
 
           <div className="p-6">
@@ -175,7 +189,9 @@ export default function ScriptDetail() {
                   ))}
 
                   {script.content.tabs[activeTab].accordions.length === 0 && (
-                    <p className="text-gray-500 italic">Tidak ada accordion di tab ini.</p>
+                    <p className="text-gray-500 italic">
+                      Tidak ada accordion di tab ini.
+                    </p>
                   )}
                 </div>
               </>
@@ -219,7 +235,6 @@ const AccordionItem = ({
           className="p-4 bg-white dark:bg-boxdark text-black dark:text-gray-300 
                      prose max-w-none dark:prose-invert
                      prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-a:text-primary"
-          
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}

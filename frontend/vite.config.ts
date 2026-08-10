@@ -16,6 +16,14 @@ export default defineConfig({
     }),
   ],
   server: {
+    // --- SEMENTARA untuk tunnel (ngrok/cloudflare) saat upload data bareng ---
+    // host: true membuat Vite dev server bisa diakses dari luar (bukan cuma localhost),
+    // dan allowedHosts: true mematikan validasi Host header Vite yang biasanya
+    // menolak request dari domain tunnel (*.ngrok-free.app, dsb).
+    // HAPUS/comment 2 baris ini lagi kalau proses upload data sudah selesai.
+    host: true,
+    allowedHosts: true,
+
     proxy: {
       "/api": {
         target: "http://localhost:8080", // Sesuaikan dengan port Backend Go kamu

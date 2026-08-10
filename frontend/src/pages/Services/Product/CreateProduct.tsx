@@ -35,13 +35,12 @@ export default function CreateProduct() {
             slug: data.slug,
             category_id: data.category_id,
             is_breaking: data.is_breaking,
-            is_active: data.is_active ?? true,
             content: data.content,
           });
         } catch (error) {
           console.error("Gagal load detail:", error);
           toast.error("Gagal mengambil data produk.");
-          navigate("/knowledge-base");
+          navigate("/products");
         } finally {
           setLoading(false);
         }
@@ -55,8 +54,8 @@ export default function CreateProduct() {
     setIsSubmitting(true);
 
     // Validasi Manual untuk Kategori
-    if (!data.category_id || data.category_id === 0) {
-      toast.error("Mohon pilih Kategori terlebih dahulu.");
+    if (!data.category_id || data.category_id === 0 || data.category_id === 1) {
+      toast.error("Mohon pilih sub-kategori spesifik untuk Informasi.");
       setIsSubmitting(false);
       return;
     }
@@ -66,7 +65,6 @@ export default function CreateProduct() {
       slug: data.slug,
       category_id: Number(data.category_id),
       is_breaking: Boolean(data.is_breaking),
-      is_active: Boolean(data.is_active),
       content: data.content,
     };
 
@@ -90,7 +88,7 @@ export default function CreateProduct() {
       });
 
       // Redirect ke Knowledge Base setelah sukses
-      navigate("/knowledge-base");
+      navigate("/products");
     } catch (error) {
       console.error(error);
       // Error sudah dihandle oleh toast.promise
@@ -118,7 +116,7 @@ export default function CreateProduct() {
         initialValues={initialData}
         onSubmit={handleSave}
         isSubmitting={isSubmitting}
-        onCancel={() => navigate("/knowledge-base")} // Arahkan tombol batal ke Knowledge Base
+        onCancel={() => navigate("/products")} // Arahkan tombol batal ke Knowledge Base
         titleLabel="Nama Produk"
         typeLabel="Produk"
       />

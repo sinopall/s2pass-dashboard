@@ -226,8 +226,8 @@ export default function Home() {
 
     const path =
       item.kind === "script"
-        ? `/knowledge-base/scripts/view/${item.id}`
-        : `/knowledge-base/products/view/${item.id}`;
+        ? `/scripts/view/${item.id}`
+        : `/products/view/${item.id}`;
 
     navigate(path, { state: { from } });
   };

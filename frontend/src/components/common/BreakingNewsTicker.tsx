@@ -29,8 +29,8 @@ export default function BreakingNewsTicker() {
 
   const goDetail = (it: BreakingItem) => {
     if (it.type === "product")
-      navigate(`/knowledge-base/products/view/${it.id}`);
-    else navigate(`/knowledge-base/scripts/view/${it.id}`);
+      navigate(`/products/view/${it.id}`);
+    else navigate(`/scripts/view/${it.id}`);
   };
 
   useEffect(() => {

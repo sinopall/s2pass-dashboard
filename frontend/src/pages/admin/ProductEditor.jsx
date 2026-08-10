@@ -473,152 +473,6 @@ function AccordionCard({
   );
 }
 
-// ==================== ATTACHMENTS PANEL ====================
-
-function fileIconFor(ext) {
-  if (ext === ".docx") return <FileText size={18} className="text-blue-600" />;
-  if (ext === ".pdf") return <FileText size={18} className="text-red-600" />;
-  return <FileIcon size={18} className="text-slate-500" />;
-}
-
-function AttachmentRow({ att, onDelete }) {
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 bg-white">
-      <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
-        {fileIconFor(att.file_ext)}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-slate-900 truncate">
-          {att.file_name}
-        </div>
-        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-          <span>{formatFileSize(att.file_size)}</span>
-          <span>•</span>
-          <span>{new Date(att.created_at).toLocaleString()}</span>
-          {att.kind === "source_document" && (
-            <>
-              <span>•</span>
-              <span className="text-bjb-navy font-semibold">Dokumen Asli</span>
-            </>
-          )}
-        </div>
-      </div>
-      <a
-        href={toAbsoluteUrl(att.file_url)}
-        target="_blank"
-        rel="noreferrer"
-        download
-        className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 shrink-0"
-        title="Download"
-      >
-        <Download size={16} className="text-slate-700" />
-      </a>
-      <button
-        type="button"
-        onClick={() => onDelete(att.id)}
-        className="h-9 w-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 shrink-0"
-        title="Hapus lampiran"
-      >
-        <Trash2 size={16} className="text-red-600" />
-      </button>
-    </div>
-  );
-}
-
-function AttachmentsPanel({ productId, toast }) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await api.get(`/products/${productId}/attachments`);
-      setItems(res.data || []);
-    } catch (e) {
-      toast.error("Gagal load lampiran", e?.response?.data?.error ?? "Unknown");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (productId) load();
-  }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleUpload(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("kind", "attachment");
-      await api.post(`/products/${productId}/attachments`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success("Berhasil", "Lampiran berhasil diupload");
-      await load();
-    } catch (e) {
-      toast.error("Gagal upload", e?.response?.data?.error ?? "Unknown");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  }
-
-  async function handleDelete(attId) {
-    if (!confirm("Hapus lampiran ini? File akan dihapus permanen.")) return;
-    try {
-      await api.delete(`/products/attachments/${attId}`);
-      toast.success("Berhasil", "Lampiran dihapus");
-      await load();
-    } catch (e) {
-      toast.error("Gagal hapus", e?.response?.data?.error ?? "Unknown");
-    }
-  }
-
-  return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-lg font-bold text-slate-900 inline-flex items-center gap-2">
-            <Paperclip size={18} /> Lampiran
-          </div>
-          <div className="text-sm text-slate-500 mt-1">
-            Dokumen asli (docx/pdf) dan file pendukung lainnya.
-          </div>
-        </div>
-        <label className="rounded-2xl bg-bjb-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-95 cursor-pointer inline-flex items-center gap-2">
-          {uploading ? "Mengupload..." : "+ Upload File"}
-          <input
-            type="file"
-            className="hidden"
-            accept=".docx,.pdf,.png,.jpg,.jpeg,.webp"
-            onChange={handleUpload}
-            disabled={uploading}
-          />
-        </label>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        {loading ? (
-          <div className="text-sm text-slate-500 py-4 text-center">
-            Memuat lampiran...
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-sm text-slate-500 py-6 text-center">
-            Belum ada lampiran untuk produk ini.
-          </div>
-        ) : (
-          items.map((att) => (
-            <AttachmentRow key={att.id} att={att} onDelete={handleDelete} />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ==================== MAIN ====================
 
@@ -645,11 +499,6 @@ export function ProductEditor({ mode }) {
   const [activeTab, setActiveTab] = useState(0);
   const [openIdx, setOpenIdx] = useState(0);
   const [saving, setSaving] = useState(false);
-
-  // File hasil docx import yang sudah tersimpan di server,
-  // tapi BELUM ter-link ke produk manapun (karena produk baru belum punya id).
-  // Akan di-link otomatis setelah produk berhasil disimpan (create).
-  const [pendingAttachment, setPendingAttachment] = useState(null);
 
   async function loadTree() {
     const res = await api.get("/categories/tree");
@@ -778,36 +627,6 @@ export function ProductEditor({ mode }) {
       setOpenIdx(0);
     }
 
-    // Simpan info file asli untuk di-link setelah produk disimpan.
-    // Untuk mode "edit", langsung link sekarang juga (produk sudah punya id).
-    if (result.original_file_url) {
-      const fileInfo = {
-        file_name: result.original_file_name,
-        file_url: result.original_file_url,
-        file_size: result.original_file_size,
-        kind: "source_document",
-      };
-
-      if (mode === "edit" && id) {
-        api
-          .post(`/products/${id}/attachments/link`, fileInfo)
-          .then(() =>
-            toast.success(
-              "Dokumen tersimpan",
-              "File asli berhasil dilampirkan ke produk ini",
-            ),
-          )
-          .catch(() =>
-            toast.error(
-              "Gagal lampirkan",
-              "File sudah ter-parse, tapi gagal disimpan sebagai lampiran",
-            ),
-          );
-      } else {
-        setPendingAttachment(fileInfo);
-      }
-    }
-
     const totalAcc = result.tabs.reduce((s, t) => s + t.accordions.length, 0);
     toast.success(
       "Berhasil diimport",
@@ -916,24 +735,6 @@ export function ProductEditor({ mode }) {
       } else {
         const res = await api.post("/products", payload);
         const newId = res.data?.id;
-
-        // Kalau ada file docx pending dari proses import, link sekarang
-        // setelah produk baru ini berhasil dibuat dan punya id.
-        if (newId && pendingAttachment) {
-          try {
-            await api.post(
-              `/products/${newId}/attachments/link`,
-              pendingAttachment,
-            );
-          } catch (e) {
-            // Tidak fatal — produk tetap berhasil dibuat meski lampiran gagal di-link
-            console.error("Gagal link attachment:", e);
-            toast.error(
-              "Lampiran gagal disimpan",
-              "Produk berhasil dibuat, tapi file asli gagal dilampirkan. Bisa upload manual nanti.",
-            );
-          }
-        }
 
         toast.success("Berhasil", "Product berhasil dibuat");
       }
@@ -1091,16 +892,6 @@ export function ProductEditor({ mode }) {
           </div>
           <DocxImporter onApply={handleDocxApply} />
 
-          {pendingAttachment && (
-            <div className="mt-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-3">
-              <FileText size={18} className="text-amber-700 shrink-0" />
-              <div className="text-xs text-amber-800">
-                File <b>{pendingAttachment.file_name}</b> akan otomatis
-                tersimpan sebagai lampiran setelah kamu klik <b>Save</b> di
-                bawah.
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1202,11 +993,6 @@ export function ProductEditor({ mode }) {
           ))}
         </div>
       </div>
-
-      {/* Lampiran — hanya tampil di mode edit (produk sudah punya id) */}
-      {mode === "edit" && id && (
-        <AttachmentsPanel productId={id} toast={toast} />
-      )}
 
       {/* Sticky save bar */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/90 backdrop-blur">

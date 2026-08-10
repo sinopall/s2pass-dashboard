@@ -55,13 +55,11 @@ export default function ScriptList() {
   const [selectedCatId, setSelectedCatId] = useState<number>(0);
 
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [totalData, setTotalData] = useState(0);
 
   const [flatCategories, setFlatCategories] = useState<FlatCategory[]>([]);
   const [categoryMap, setCategoryMap] = useState<Record<number, string>>({});
-
-  setLimit(10); // Default limit, bisa diubah sesuai kebutuhan
 
   const openDeleteModal = (id: number) => {
     setDeleteTargetId(id);
@@ -197,7 +195,7 @@ export default function ScriptList() {
 
             <div className="w-full md:w-auto flex justify-end">
               <Button
-                onClick={() => navigate("/knowledge-base/scripts/create")}
+                onClick={() => navigate("/scripts/create")}
               >
                 <span className="flex items-center gap-2">
                   <PlusIcon /> Tambah Script
@@ -290,7 +288,7 @@ export default function ScriptList() {
                             type="button"
                             onClick={() =>
                               navigate(
-                                `/knowledge-base/scripts/view/${item.id}`,
+                                `/scripts/view/${item.id}`,
                               )
                             }
                             className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
@@ -303,7 +301,7 @@ export default function ScriptList() {
                             type="button"
                             onClick={() =>
                               navigate(
-                                `/knowledge-base/scripts/edit/${item.id}`,
+                                `/scripts/edit/${item.id}`,
                               )
                             }
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"

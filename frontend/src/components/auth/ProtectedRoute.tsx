@@ -1,7 +1,9 @@
 import { Navigate, Outlet } from "react-router";
 
 interface ProtectedRouteProps {
-  allowedRoles: string[]; 
+  // Kalau tidak diisi -> cukup wajib login (role apapun boleh masuk).
+  // Kalau diisi -> selain wajib login, role user juga harus ada di daftar ini.
+  allowedRoles?: string[];
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
@@ -12,7 +14,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/signin" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 

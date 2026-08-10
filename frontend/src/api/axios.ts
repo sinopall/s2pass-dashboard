@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
+const baseURL = "/api";
 
 const apiInstance = axios.create({
   baseURL: baseURL,
@@ -35,10 +35,9 @@ apiInstance.interceptors.response.use(
       );
       sessionStorage.setItem(
         "auth_redirect_reason",
-        `Sesi berakhir saat memanggil ${requestUrl}: ${
-          error.response.data?.error ||
-          error.response.data?.message ||
-          "unauthorized"
+        `Sesi berakhir saat memanggil ${requestUrl}: ${error.response.data?.error ||
+        error.response.data?.message ||
+        "unauthorized"
         }`,
       );
 

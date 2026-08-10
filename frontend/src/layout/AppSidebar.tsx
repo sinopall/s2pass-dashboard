@@ -18,35 +18,35 @@ type NavItem = {
 };
 
 // ✅ Icon lokal untuk Warning (biar gak perlu edit file icons)
-const WarningIcon = ({ className = "" }: { className?: string }) => (
-  <svg
-    className={className}
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 9v4"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <path
-      d="M12 17h.01"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-    />
-  </svg>
-);
+// const WarningIcon = ({ className = "" }: { className?: string }) => (
+//   <svg
+//     className={className}
+//     width="18"
+//     height="18"
+//     viewBox="0 0 24 24"
+//     fill="none"
+//     xmlns="http://www.w3.org/2000/svg"
+//   >
+//     <path
+//       d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+//       stroke="currentColor"
+//       strokeWidth="2"
+//       strokeLinejoin="round"
+//     />
+//     <path
+//       d="M12 9v4"
+//       stroke="currentColor"
+//       strokeWidth="2"
+//       strokeLinecap="round"
+//     />
+//     <path
+//       d="M12 17h.01"
+//       stroke="currentColor"
+//       strokeWidth="3"
+//       strokeLinecap="round"
+//     />
+//   </svg>
+// );
 
 const navItems: NavItem[] = [
   {
@@ -58,19 +58,24 @@ const navItems: NavItem[] = [
     name: "Manajemen Layanan",
     icon: <BoxCubeIcon />,
     subItems: [
-      { name: "Kategori", path: "/services/categories", pro: false },
-      { name: "Knowledge Base", path: "/knowledge-base", pro: false },
-      { name: "Product Management", path: "/knowledge-base/products/manage", pro: false },
+      { name: "Categories", path: "/categories", pro: false },
+      { name: "Products", path: "/products", pro: false },
+      // { name: "Product Management", path: "/products/manage", pro: false },
+      {
+        name: "Scripts",
+        path: "/scripts",
+        pro: false,
+      },
     ],
     allowedRoles: ["admin"],
   },
 
   // ✅ TAMBAH MENU WARNING
-  {
-    icon: <WarningIcon />,
-    name: "Motivation",
-    // path: "/warning",
-  },
+  // {
+  //   icon: <WarningIcon />,
+  //   name: "Motivation",
+  //   path: "/warning",
+  // },
 
   {
     icon: <UserCircleIcon />,

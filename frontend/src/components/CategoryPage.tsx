@@ -174,11 +174,10 @@ export default function CategoryPage({
                       onClick={() =>
                         isLeaf ? onLeafSelected(n) : onCategoryClick(n)
                       }
-                      className={`group flex w-full items-center justify-between rounded-2xl border border-stroke bg-white px-5 py-4 text-left shadow-sm transition hover:shadow-md dark:border-strokedark dark:bg-boxdark-2 ${
-                        isRootButton
+                      className={`group flex w-full items-center justify-between rounded-2xl border border-stroke bg-white px-5 py-4 text-left shadow-sm transition hover:shadow-md dark:border-strokedark dark:bg-boxdark-2 ${isRootButton
                           ? "ring-1 ring-brand-100 dark:ring-white/10"
                           : ""
-                      }`}
+                        }`}
                     >
                       <div className="min-w-0">
                         <div className="truncate text-sm font-extrabold text-black dark:text-white">
@@ -210,7 +209,7 @@ export default function CategoryPage({
             Back
           </Button>
 
-          <Button onClick={() => {}} disabled>
+          <Button onClick={() => { }} disabled>
             Next
           </Button>
         </div>

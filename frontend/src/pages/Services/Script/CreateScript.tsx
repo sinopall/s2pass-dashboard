@@ -34,13 +34,12 @@ export default function CreateScript() {
             slug: data.slug,
             category_id: data.category_id,
             is_breaking: data.is_breaking,
-            is_active: data.is_active ?? true,
             content: data.content,
           });
         } catch (err) {
           console.error(err);
           toast.error("Gagal mengambil data script.");
-          navigate("/knowledge-base");
+          navigate("/products");
         } finally {
           setLoading(false);
         }
@@ -54,8 +53,8 @@ export default function CreateScript() {
     setIsSubmitting(true);
 
     // Validasi
-    if (!data.category_id || data.category_id === 0) {
-      toast.error("Mohon pilih Kategori terlebih dahulu.");
+    if (!data.category_id || data.category_id === 0 || data.category_id === 1) {
+      toast.error("Mohon pilih sub-kategori spesifik untuk Informasi.");
       setIsSubmitting(false);
       return;
     }
@@ -84,7 +83,7 @@ export default function CreateScript() {
         },
       });
 
-      navigate("/knowledge-base", { state: { activeTab: "script" } });
+      navigate("/products", { state: { activeTab: "script" } });
     } catch (error) {
       console.error(error);
     } finally {
@@ -104,7 +103,7 @@ export default function CreateScript() {
         onSubmit={handleSave}
         isSubmitting={isSubmitting}
         onCancel={() =>
-          navigate("/knowledge-base", { state: { activeTab: "script" } })
+          navigate("/scripts", { state: { activeTab: "script" } })
         }
         titleLabel="Judul Script"
         typeLabel="Script"

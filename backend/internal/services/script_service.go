@@ -34,7 +34,7 @@ func slugifyScript(s string) string {
 	return s
 }
 
-func (s *ScriptService) Create(ctx context.Context, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (s *ScriptService) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
 	// 1. Validasi Kategori
 	ok, err := s.repo.CategoryExists(ctx, categoryID)
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *ScriptService) Create(ctx context.Context, title, slug string, category
 	}
 
 	// 3. Simpan ke Repo
-	return s.repo.Create(ctx, title, finalSlug, categoryID, isBreaking, content)
+	return s.repo.Create(ctx, userID, title, finalSlug, categoryID, isBreaking, content)
 }
 
 // Logic Slug (Sama persis dengan Product, tapi cek ke ScriptRepo)

@@ -21,7 +21,7 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 
 func (r *ProductRepository) CategoryExists(ctx context.Context, id int64) (bool, error) {
 	var ok bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM categories WHERE id=$1 AND parent_id IS NOT NULL)`, id).Scan(&ok)
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM categories WHERE id=$1 AND (parent_id IS NOT NULL OR id IN (2, 3)))`, id).Scan(&ok)
 	return ok, err
 }
 
@@ -105,6 +105,40 @@ func (r *ProductRepository) GetBySlug(ctx context.Context, slug string) (models.
 	return p, err
 }
 
+// getCategoryAndDescendantIDs mengembalikan id kategori itu sendiri PLUS semua
+// id descendant-nya (anak, cucu, cicit, dst) secara rekursif.
+//
+// Ini dipakai supaya filter kategori di List() bersifat inklusif: kalau user
+// pilih kategori induk (misal "Informasi"), otomatis ikut nyertain produk yang
+// nempel di sub-kategori manapun di bawahnya — bukan cuma produk yang category_id-nya
+// PERSIS sama dengan kategori induk itu (yang mana biasanya memang tidak ada,
+// karena produk selalu ditempel ke kategori leaf paling bawah).
+func (r *ProductRepository) getCategoryAndDescendantIDs(ctx context.Context, categoryID int64) ([]int64, error) {
+	rows, err := r.db.Query(ctx, `
+		WITH RECURSIVE descendants AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION ALL
+			SELECT c.id FROM categories c
+			JOIN descendants d ON c.parent_id = d.id
+		)
+		SELECT id FROM descendants
+	`, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64, page, limit int, active *bool) ([]models.Product, int, error) {
 	if page < 1 {
 		page = 1
@@ -123,11 +157,18 @@ func (r *ProductRepository) List(ctx context.Context, q string, categoryID int64
 		args = append(args, "%"+strings.ToLower(strings.TrimSpace(q))+"%")
 		argn++
 	}
+
 	if categoryID > 0 {
-		conds = append(conds, fmt.Sprintf("category_id=$%d", argn))
-		args = append(args, categoryID)
+		descendantIDs, err := r.getCategoryAndDescendantIDs(ctx, categoryID)
+		if err != nil {
+			return nil, 0, err
+		}
+		// category_id = ANY($n) -> match ke kategori itu sendiri ATAU salah satu descendant-nya
+		conds = append(conds, fmt.Sprintf("category_id = ANY($%d)", argn))
+		args = append(args, descendantIDs)
 		argn++
 	}
+
 	if active != nil {
 		conds = append(conds, fmt.Sprintf("is_active=$%d", argn))
 		args = append(args, *active)

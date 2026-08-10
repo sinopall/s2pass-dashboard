@@ -7,11 +7,19 @@ import (
 	"s2pas-backend/internal/repositories"
 	"s2pas-backend/internal/services"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept"},
+		AllowCredentials: true,
+	}))
+	
 	userRepo := repositories.NewUserRepo(db)
 	catRepo := repositories.NewCategoryRepo(db)
 
@@ -27,9 +35,6 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	productSvc := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productSvc)
 
-	// product attachments
-	attachmentRepo := repositories.NewProductAttachmentRepository(db)
-	attachmentHandler := handlers.NewProductAttachmentHandler(attachmentRepo)
 
 	uploadH := handlers.NewUploadHandler()
 	docxImportH := handlers.NewDocxImportHandler()
@@ -83,11 +88,6 @@ func Register(r *gin.Engine, db *pgxpool.Pool, cfg config.Config) {
 	admin.PATCH("/products/:id/status", productHandler.UpdateStatus)
 	admin.DELETE("/products/:id", productHandler.Delete)
 
-	// Product attachments
-	protected.GET("/products/:id/attachments", attachmentHandler.List)
-	admin.POST("/products/:id/attachments", attachmentHandler.Upload)
-	admin.POST("/products/:id/attachments/link", attachmentHandler.LinkExisting)
-	admin.DELETE("/products/attachments/:attachmentId", attachmentHandler.Delete)
 
 	// Scripts
 	api.GET("/scripts", scriptH.List)

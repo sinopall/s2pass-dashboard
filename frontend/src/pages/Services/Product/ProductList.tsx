@@ -273,7 +273,7 @@ export default function ProductList() {
             {isAdmin && (
               <div className="w-full md:w-auto flex justify-end">
                 <Button
-                  onClick={() => navigate("/knowledge-base/products/create")}
+                  onClick={() => navigate("/products/create")}
                 >
                   <span className="flex items-center gap-2">
                     <PlusIcon /> Tambah Produk
@@ -336,7 +336,7 @@ export default function ProductList() {
                         !item.is_active ? "opacity-60" : ""
                       }`}
                       onClick={() =>
-                        navigate(`/knowledge-base/products/view/${item.id}`)
+                        navigate(`/products/view/${item.id}`)
                       }
                     >
                       <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
@@ -428,7 +428,7 @@ export default function ProductList() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(
-                                    `/knowledge-base/products/view/${item.id}`,
+                                    `/products/view/${item.id}`,
                                   );
                                 }}
                                 className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
@@ -441,7 +441,7 @@ export default function ProductList() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(
-                                    `/knowledge-base/products/edit/${item.id}`,
+                                    `/products/edit/${item.id}`,
                                   );
                                 }}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"

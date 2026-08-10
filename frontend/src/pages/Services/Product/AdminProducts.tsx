@@ -78,7 +78,7 @@ export default function AdminProducts() {
             </p>
           </div>
           <Link
-            to="/knowledge-base/products/create"
+            to="/products/create"
             className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 transition-colors"
           >
             <svg
@@ -111,7 +111,7 @@ export default function AdminProducts() {
                 Belum ada produk.
               </p>
               <Link
-                to="/knowledge-base/products/create"
+                to="/products/create"
                 className="mt-3 inline-block text-sm font-semibold text-brand-500 hover:underline"
               >
                 + Buat produk pertama
@@ -176,7 +176,7 @@ export default function AdminProducts() {
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            to={`/knowledge-base/products/edit/${p.id}`}
+                            to={`/products/edit/${p.id}`}
                             className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 transition-colors"
                           >
                             Edit

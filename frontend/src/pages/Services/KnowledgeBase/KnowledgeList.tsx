@@ -92,9 +92,9 @@ export default function KnowledgeList() {
   const handleItemClick = (item: KnowledgeItem) => {
     // Arahkan ke rute view masing-masing
     if (item.type === "product") {
-      navigate(`/knowledge-base/products/view/${item.id}`);
+      navigate(`/products/view/${item.id}`);
     } else {
-      navigate(`/knowledge-base/scripts/view/${item.id}`);
+      navigate(`/scripts/view/${item.id}`);
     }
   };
 

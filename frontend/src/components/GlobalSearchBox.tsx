@@ -57,9 +57,9 @@ export default function GlobalSearchBox({
                     setSearchOpen(false);
                     setGlobalQ("");
                     if (it.type === "product") {
-                      navigate(`/knowledge-base/products/view/${it.id}`);
+                      navigate(`/products/view/${it.id}`);
                     } else {
-                      navigate(`/knowledge-base/scripts/view/${it.id}`);
+                      navigate(`/scripts/view/${it.id}`);
                     }
                   }}
                   type="button"
