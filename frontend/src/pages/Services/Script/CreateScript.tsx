@@ -1,22 +1,47 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import axios from "../../../api/axios";
 import API from "../../../api/api";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { toast } from "react-toastify";
 // Import Form Reusable yang sudah Anda buat
-import ContentForm, {
-  ContentFormValues,
-} from "../../../components/form/ContentForm";
+import ScriptForm, {
+  ScriptFormValues,
+} from "../../../components/form/ScriptForm";
 
 export default function CreateScript() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const isEditMode = Boolean(id);
 
-  const [initialData, setInitialData] = useState<ContentFormValues | undefined>(
-    undefined,
+  const prefillCategoryId = location.state?.prefillCategoryId;
+  const prefillProductId = location.state?.prefillProductId;
+
+  const [initialData, setInitialData] = useState<ScriptFormValues | undefined>(
+    () => {
+      // Jika mode BUAT BARU dan ada data prefill dari halaman produk
+      if (!isEditMode && (prefillCategoryId || prefillProductId)) {
+        return {
+          title: "",
+          slug: "",
+          category_id: prefillCategoryId || 1,
+          product_id: prefillProductId,
+          is_breaking: false,
+          content: {
+            tabs: [
+              {
+                title: "Informasi Umum",
+                accordions: [{ title: "Deskripsi", body_html: "" }],
+              },
+            ],
+          },
+        };
+      }
+      return undefined; // Jika tidak ada prefill, biarkan undefined (menggunakan default ScriptForm)
+    },
   );
+
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,13 +58,14 @@ export default function CreateScript() {
             title: data.title,
             slug: data.slug,
             category_id: data.category_id,
+            product_id: data.product_id,
             is_breaking: data.is_breaking,
             content: data.content,
           });
         } catch (err) {
           console.error(err);
           toast.error("Gagal mengambil data script.");
-          navigate("/products");
+          navigate("/scripts");
         } finally {
           setLoading(false);
         }
@@ -49,7 +75,7 @@ export default function CreateScript() {
   }, [isEditMode, id, navigate]);
 
   // 2. Handler Simpan
-  const handleSave = async (data: ContentFormValues) => {
+  const handleSave = async (data: ScriptFormValues) => {
     setIsSubmitting(true);
 
     // Validasi
@@ -63,6 +89,7 @@ export default function CreateScript() {
       title: data.title,
       slug: data.slug,
       category_id: Number(data.category_id),
+      product_id: data.product_id ? Number(data.product_id) : undefined,
       is_breaking: Boolean(data.is_breaking),
       content: data.content,
     };
@@ -83,7 +110,7 @@ export default function CreateScript() {
         },
       });
 
-      navigate("/products", { state: { activeTab: "script" } });
+      navigate("/scripts", { state: { activeTab: "script" } });
     } catch (error) {
       console.error(error);
     } finally {
@@ -98,7 +125,7 @@ export default function CreateScript() {
       <PageBreadcrumb
         pageTitle={isEditMode ? "Edit Script" : "Tambah Script Baru"}
       />
-      <ContentForm
+      <ScriptForm
         initialValues={initialData}
         onSubmit={handleSave}
         isSubmitting={isSubmitting}

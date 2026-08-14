@@ -5,9 +5,20 @@ import UserDropdown from "../components/header/UserDropdown";
 
 // ✅ TAMBAH INI
 import BreakingNewsTicker from "../components/common/BreakingNewsTicker";
+import GlobalSearchBox from "../components/GlobalSearchBox";
+import { useGlobalSearch } from "../hooks/useGlobalSearch";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const {
+    globalQ,
+    setGlobalQ,
+    searchItems,
+    searchLoading,
+    searchOpen,
+    setSearchOpen,
+    searchBoxRef,
+  } = useGlobalSearch();
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -114,6 +125,18 @@ const AppHeader: React.FC = () => {
               isApplicationMenuOpen ? "flex" : "hidden"
             } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
           >
+            <div className="flex-1 w-full max-w-lg lg:ml-auto lg:mr-4">
+              <GlobalSearchBox
+                searchBoxRef={searchBoxRef}
+                globalQ={globalQ}
+                setGlobalQ={setGlobalQ}
+                searchOpen={searchOpen}
+                setSearchOpen={setSearchOpen}
+                searchLoading={searchLoading}
+                searchItems={searchItems}
+                onBeforeNavigate={() => {}}
+              />
+            </div>
             <UserDropdown />
           </div>
         </div>

@@ -32,24 +32,25 @@ export default function CategoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // ==================== SEARCH -> JUMP TO PRODUCT ====================
-  interface ProductSearchResult {
+  // ==================== SEARCH -> JUMP TO PRODUCT/SCRIPT ====================
+  interface SearchResult {
     id: number;
     title: string;
     category_id: number;
+    kind: "product" | "script";
   }
 
   const [searchQ, setSearchQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
-  const [searchResults, setSearchResults] = useState<ProductSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
 
   // Set berisi id kategori (root..leaf) yang harus di-force-expand
   const [expandIds, setExpandIds] = useState<Set<number> | null>(null);
-  // id produk yang sedang jadi target highlight + auto-scroll
-  const [highlightProductId, setHighlightProductId] = useState<number | null>(
+  // target highlight (id dan jenisnya)
+  const [highlightTarget, setHighlightTarget] = useState<{ id: number, kind: "product"|"script" } | null>(
     null,
   );
   // nonce -> supaya effect scroll tetap ke-trigger walau user pilih ulang produk yang sama
@@ -70,12 +71,17 @@ export default function CategoryPage() {
     (async () => {
       setSearchLoading(true);
       try {
-        const res = await axios.get(API.products.list, {
-          params: { q: debouncedQ, page: 1, limit: 8 },
-        });
-        setSearchResults(res.data?.items || []);
+        const [prodRes, scriptRes] = await Promise.all([
+          axios.get(API.products.list, { params: { q: debouncedQ, page: 1, limit: 5 } }),
+          axios.get(API.scripts.list, { params: { q: debouncedQ, page: 1, limit: 5 } }),
+        ]);
+
+        const products = (prodRes.data?.items || []).map((p: any) => ({ ...p, kind: "product" }));
+        const scripts = (scriptRes.data?.items || []).map((s: any) => ({ ...s, kind: "script" }));
+
+        setSearchResults([...products, ...scripts]);
       } catch (err) {
-        console.error("Gagal search produk:", err);
+        console.error("Gagal search produk/script:", err);
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
@@ -95,18 +101,17 @@ export default function CategoryPage() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // klik salah satu hasil search -> ambil jalur kategori root..leaf -> expand + highlight
-  const handlePickSearchResult = async (product: ProductSearchResult) => {
+  const handlePickSearchResult = async (item: SearchResult) => {
     setSearchOpen(false);
-    setSearchQ(product.title);
+    setSearchQ(item.title);
 
     try {
       const res = await axios.get(API.categories.path, {
-        params: { leafId: product.category_id },
+        params: { leafId: item.category_id },
       });
       const path: Category[] = res.data || [];
       setExpandIds(new Set(path.map((c) => c.id)));
-      setHighlightProductId(product.id);
+      setHighlightTarget({ id: item.id, kind: item.kind });
       setHighlightNonce((n) => n + 1);
     } catch (err) {
       console.error("Gagal ambil jalur kategori:", err);
@@ -314,7 +319,7 @@ export default function CategoryPage() {
                     setSearchOpen(true);
                   }}
                   onFocus={() => setSearchOpen(true)}
-                  placeholder="Cari produk, langsung buka lokasinya..."
+                  placeholder="Cari produk atau script..."
                   className="w-full rounded-lg border border-stroke bg-white pl-4 pr-9 py-2.5 text-sm outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -343,17 +348,20 @@ export default function CategoryPage() {
                       </div>
                     ) : searchResults.length === 0 ? (
                       <div className="px-4 py-3 text-xs text-gray-400">
-                        Tidak ada produk yang cocok.
+                        Tidak ada produk atau script yang cocok.
                       </div>
                     ) : (
                       searchResults.map((p) => (
                         <button
-                          key={p.id}
+                          key={`${p.kind}-${p.id}`}
                           type="button"
                           onClick={() => handlePickSearchResult(p)}
-                          className="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-meta-4 transition"
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-meta-4 transition flex justify-between items-center"
                         >
-                          {p.title}
+                          <span className="truncate pr-2">{p.title}</span>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 shrink-0 border border-gray-200 dark:border-gray-600 rounded-full px-2 py-0.5">
+                            {p.kind}
+                          </span>
                         </button>
                       ))
                     )}
@@ -426,7 +434,7 @@ export default function CategoryPage() {
                       onDelete={handleDelete}
                       isAdmin={isAdmin}
                       expandIds={expandIds}
-                      highlightProductId={highlightProductId}
+                      highlightTarget={highlightTarget}
                       highlightNonce={highlightNonce}
                     />
                   ))

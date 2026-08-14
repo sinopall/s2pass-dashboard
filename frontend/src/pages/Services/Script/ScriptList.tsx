@@ -8,15 +8,11 @@ import {
   FlatCategory,
 } from "../../../utils/categoryUtils";
 import Button from "../../../components/ui/button/Button";
-import {
-  PencilIcon,
-  TrashBinIcon,
-  PlusIcon,
-  ChevronDownIcon,
-} from "../../../icons";
+import { PencilIcon, TrashBinIcon, PlusIcon } from "../../../icons";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/ui/modal/ConfirmationModal";
 import { Script } from "../types";
+import CategoryTreeSelect from "../../../components/form/CategoryTreeSelect";
 
 const EyeIcon = ({ className = "" }: { className?: string }) => (
   <svg
@@ -49,6 +45,7 @@ export default function ScriptList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -65,6 +62,18 @@ export default function ScriptList() {
     setDeleteTargetId(id);
     setIsDeleteModalOpen(true);
   };
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("user_data");
+    if (storedData) {
+      try {
+        const user = JSON.parse(storedData);
+        setIsAdmin(user.role === "admin");
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -136,11 +145,6 @@ export default function ScriptList() {
     fetchScripts();
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCatId(Number(e.target.value));
-    setPage(1);
-  };
-
   return (
     <>
       <div className="flex flex-col gap-5 md:gap-7 2xl:gap-10 mt-5">
@@ -173,35 +177,26 @@ export default function ScriptList() {
                 />
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <select
-                  value={selectedCatId}
-                  onChange={handleCategoryChange}
-                  className="w-full appearance-none bg-transparent pl-4 pr-10 py-2 border border-stroke rounded-lg outline-none focus:border-primary dark:border-strokedark dark:bg-meta-4 cursor-pointer"
-                >
-                  <option value="0">Semua Kategori</option>
-                  {flatCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {"\u00A0".repeat(cat.depth * 4)}
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                  <ChevronDownIcon className="w-4 h-4" />
-                </span>
-              </div>
+              {/* Dropdown kategori — searchable, tetap tampil sebagai tree */}
+              <CategoryTreeSelect
+                categories={flatCategories}
+                value={selectedCatId}
+                onChange={(id) => {
+                  setSelectedCatId(id);
+                  setPage(1);
+                }}
+              />
             </div>
 
-            <div className="w-full md:w-auto flex justify-end">
-              <Button
-                onClick={() => navigate("/scripts/create")}
-              >
-                <span className="flex items-center gap-2">
-                  <PlusIcon /> Tambah Script
-                </span>
-              </Button>
-            </div>
+            {isAdmin && (
+              <div className="w-full md:w-auto flex justify-end">
+                <Button onClick={() => navigate("/scripts/create")}>
+                  <span className="flex items-center gap-2">
+                    <PlusIcon /> Tambah Script
+                  </span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -223,9 +218,11 @@ export default function ScriptList() {
                   <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
                     Status
                   </th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">
-                    Aksi
-                  </th>
+                  {isAdmin && (
+                    <th className="py-4 px-4 font-medium text-black dark:text-white text-right pr-8">
+                      Aksi
+                    </th>
+                  )}
                 </tr>
               </thead>
 
@@ -246,7 +243,8 @@ export default function ScriptList() {
                   scripts.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors"
+                      className="hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/scripts/view/${item.id}`)}
                     >
                       <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                         <span className="text-gray-500">
@@ -264,7 +262,17 @@ export default function ScriptList() {
                       </td>
 
                       <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                        <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        <span
+                          className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                            categoryMap[item.category_id] === "Informasi"
+                              ? "bg-blue-100 text-blue-800"
+                              : categoryMap[item.category_id] === "Request"
+                                ? "bg-green-100 text-green-800"
+                                : categoryMap[item.category_id] === "Complaint"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {categoryMap[item.category_id] ||
                             `ID: ${item.category_id}`}
                         </span>
@@ -282,44 +290,47 @@ export default function ScriptList() {
                         )}
                       </td>
 
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                        <div className="flex items-center justify-end gap-2 pr-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(
-                                `/scripts/view/${item.id}`,
-                              )
-                            }
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
-                            title="Lihat Detail"
-                          >
-                            <EyeIcon className="w-5 h-5" />
-                          </button>
+                      {isAdmin && (
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <div className="flex items-center justify-end gap-2 pr-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/scripts/view/${item.id}`);
+                              }}
+                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
+                              title="Lihat Detail"
+                            >
+                              <EyeIcon className="w-5 h-5" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(
-                                `/scripts/edit/${item.id}`,
-                              )
-                            }
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
-                            title="Edit"
-                          >
-                            <PencilIcon className="w-5 h-5" />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/scripts/edit/${item.id}`);
+                              }}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
+                              title="Edit"
+                            >
+                              <PencilIcon className="w-5 h-5" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => openDeleteModal(item.id)}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
-                            title="Hapus"
-                          >
-                            <TrashBinIcon className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(item.id);
+                              }}
+                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
+                              title="Hapus"
+                            >
+                              <TrashBinIcon className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

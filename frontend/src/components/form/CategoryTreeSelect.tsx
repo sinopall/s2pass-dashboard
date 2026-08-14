@@ -7,6 +7,7 @@ interface Props {
   value: number;
   onChange: (id: number) => void;
   placeholder?: string;
+  className?: string;
 }
 
 /**
@@ -20,6 +21,7 @@ export default function CategoryTreeSelect({
   value,
   onChange,
   placeholder = "Cari atau pilih kategori...",
+  className,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -78,7 +80,7 @@ export default function CategoryTreeSelect({
   }
 
   return (
-    <div ref={boxRef} className="relative w-full sm:w-64">
+    <div ref={boxRef} className={className || "relative w-full sm:w-64"}>
       <div className="relative">
         <input
           type="text"

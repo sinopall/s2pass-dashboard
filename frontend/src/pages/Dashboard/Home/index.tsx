@@ -8,7 +8,6 @@ import { PageKey, DetailKind } from "../../../types/home.types";
 import { useAgentScripts } from "./../../../hooks/useAgentScripts";
 import { useCustomerName } from "./../../../hooks/useCustomerName";
 import { useCategoryTree } from "./../../../hooks/useCategoryTree";
-import { useGlobalSearch } from "./../../../hooks/useGlobalSearch";
 import { useDashboardReturn } from "./../../../hooks/useDashboardReturn";
 
 import Toast from "./../../../components/Toast";
@@ -61,16 +60,7 @@ export default function Home() {
     popCategoryStack,
   } = useCategoryTree();
 
-  const {
-    globalQ,
-    setGlobalQ,
-    searchItems,
-    searchLoading,
-    searchOpen,
-    setSearchOpen,
-    searchBoxRef,
-    resetSearch,
-  } = useGlobalSearch();
+
 
   const { saveDashboardReturn, clearDashboardReturn } = useDashboardReturn({
     page,
@@ -103,7 +93,6 @@ export default function Home() {
     setDetailError("");
     setLeafItems(null);
     setLeafCategoryName("");
-    resetSearch();
   };
 
   // ===== 1 tombol back universal =====
@@ -252,14 +241,6 @@ export default function Home() {
       <div className="space-y-4">
         <DashboardHeader
           savedName={savedName}
-          searchBoxRef={searchBoxRef}
-          globalQ={globalQ}
-          setGlobalQ={setGlobalQ}
-          searchOpen={searchOpen}
-          setSearchOpen={setSearchOpen}
-          searchLoading={searchLoading}
-          searchItems={searchItems}
-          onBeforeNavigate={saveDashboardReturn}
           onBack={handleBack}
           onReset={backToHome}
         />

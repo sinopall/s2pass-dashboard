@@ -272,9 +272,7 @@ export default function ProductList() {
             {/* Tambah */}
             {isAdmin && (
               <div className="w-full md:w-auto flex justify-end">
-                <Button
-                  onClick={() => navigate("/products/create")}
-                >
+                <Button onClick={() => navigate("/products/create")}>
                   <span className="flex items-center gap-2">
                     <PlusIcon /> Tambah Produk
                   </span>
@@ -335,9 +333,7 @@ export default function ProductList() {
                       className={`hover:bg-gray-50 dark:hover:bg-meta-4/50 transition-colors cursor-pointer ${
                         !item.is_active ? "opacity-60" : ""
                       }`}
-                      onClick={() =>
-                        navigate(`/products/view/${item.id}`)
-                      }
+                      onClick={() => navigate(`/products/view/${item.id}`)}
                     >
                       <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                         <span className="text-gray-500">
@@ -420,52 +416,46 @@ export default function ProductList() {
                         </div>
                       </td>
 
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                        <div className="flex items-center justify-end gap-2 pr-4">
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(
-                                    `/products/view/${item.id}`,
-                                  );
-                                }}
-                                className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
-                                title="Lihat Detail"
-                                type="button"
-                              >
-                                <EyeIcon className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(
-                                    `/products/edit/${item.id}`,
-                                  );
-                                }}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
-                                title="Edit"
-                                type="button"
-                              >
-                                <PencilIcon className="w-5 h-5" />
-                              </button>
+                      {isAdmin && (
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <div className="flex items-center justify-end gap-2 pr-4">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/products/view/${item.id}`);
+                              }}
+                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-gray-600 hover:text-blue-500 transition"
+                              title="Lihat Detail"
+                              type="button"
+                            >
+                              <EyeIcon className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/products/edit/${item.id}`);
+                              }}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 hover:text-primary transition"
+                              title="Edit"
+                              type="button"
+                            >
+                              <PencilIcon className="w-5 h-5" />
+                            </button>
 
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openDeleteModal(item.id);
-                                }}
-                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
-                                title="Hapus"
-                                type="button"
-                              >
-                                <TrashBinIcon className="w-5 h-5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(item.id);
+                              }}
+                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-600 hover:text-red-500 transition"
+                              title="Hapus"
+                              type="button"
+                            >
+                              <TrashBinIcon className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

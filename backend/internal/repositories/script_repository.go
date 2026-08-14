@@ -43,30 +43,30 @@ func (r *ScriptRepository) SlugExists(ctx context.Context, slug string, excludeI
 	return ok, err
 }
 
-func (r *ScriptRepository) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (r *ScriptRepository) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, productID *int64, isBreaking bool, content any) (models.Script, error) {
 	b, _ := json.Marshal(content)
 
 	var s models.Script
 	err := r.db.QueryRow(ctx, `
-        INSERT INTO scripts(user_id, title, slug, category_id, is_breaking, content)
-        VALUES ($1,$2,$3,$4,$5,$6::jsonb)
-        RETURNING id,user_id,title,slug,category_id,is_breaking,content,created_at,updated_at
-    `, userID, title, slug, categoryID, isBreaking, string(b)).
-		Scan(&s.ID, &s.UserID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
+        INSERT INTO scripts(user_id, title, slug, category_id, product_id, is_breaking, content)
+        VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)
+        RETURNING id,user_id,title,slug,category_id,product_id,is_breaking,content,created_at,updated_at
+    `, userID, title, slug, categoryID, productID, isBreaking, string(b)).
+		Scan(&s.ID, &s.UserID, &s.Title, &s.Slug, &s.CategoryID, &s.ProductID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
 	return s, err
 }
 
 func (r *ScriptRepository) GetByID(ctx context.Context, id int64) (models.Script, error) {
 	var s models.Script
 	err := r.db.QueryRow(ctx, `
-        SELECT id, title, slug, category_id, is_breaking, content, created_at, updated_at
+        SELECT id, title, slug, category_id, product_id, is_breaking, content, created_at, updated_at
         FROM scripts 
         WHERE id=$1
-    `, id).Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
+    `, id).Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.ProductID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
 	return s, err
 }
 
-func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64, page, limit int) ([]models.Script, int, error) {
+func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64, productID int64, page, limit int) ([]models.Script, int, error) {
 	// 1. Default Pagination
 	if page < 1 {
 		page = 1
@@ -93,6 +93,12 @@ func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64,
 		args = append(args, categoryID)
 		argn++
 	}
+	// Filter Product
+	if productID > 0 {
+		conds = append(conds, fmt.Sprintf("product_id=$%d", argn))
+		args = append(args, productID)
+		argn++
+	}
 
 	where := strings.Join(conds, " AND ")
 
@@ -105,7 +111,7 @@ func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64,
 
 	// 4. Get Data
 	listSQL := fmt.Sprintf(`
-        SELECT id, title, slug, category_id, is_breaking, content, created_at, updated_at
+        SELECT id, title, slug, category_id, product_id, is_breaking, content, created_at, updated_at
         FROM scripts
         WHERE %s
         ORDER BY updated_at DESC
@@ -123,7 +129,7 @@ func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64,
 	out := []models.Script{}
 	for rows.Next() {
 		var s models.Script
-		if err := rows.Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.ProductID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, s)
@@ -131,17 +137,17 @@ func (r *ScriptRepository) List(ctx context.Context, q string, categoryID int64,
 	return out, total, nil
 }
 
-func (r *ScriptRepository) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (r *ScriptRepository) Update(ctx context.Context, id int64, title, slug string, categoryID int64, productID *int64, isBreaking bool, content any) (models.Script, error) {
 	b, _ := json.Marshal(content)
 
 	var s models.Script
 	err := r.db.QueryRow(ctx, `
         UPDATE scripts
-        SET title=$1, slug=$2, category_id=$3, is_breaking=$4, content=$5::jsonb, updated_at=NOW()
-        WHERE id=$6
-        RETURNING id, title, slug, category_id, is_breaking, content, created_at, updated_at
-    `, title, slug, categoryID, isBreaking, string(b), id).
-		Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
+        SET title=$1, slug=$2, category_id=$3, product_id=$4, is_breaking=$5, content=$6::jsonb, updated_at=NOW()
+        WHERE id=$7
+        RETURNING id, title, slug, category_id, product_id, is_breaking, content, created_at, updated_at
+    `, title, slug, categoryID, productID, isBreaking, string(b), id).
+		Scan(&s.ID, &s.Title, &s.Slug, &s.CategoryID, &s.ProductID, &s.IsBreaking, &s.Content, &s.CreatedAt, &s.UpdatedAt)
 	return s, err
 }
 
@@ -159,13 +165,13 @@ func (r *ScriptRepository) Delete(ctx context.Context, id int64) error {
 
 func (r *ScriptRepository) GetByUserID(ctx context.Context, userID int64) (*models.Script, error) {
 	// Query ini mengambil script berdasarkan user_id yang kita tambahkan di database tadi
-	query := `SELECT id, user_id, title, slug, category_id, is_breaking, content, created_at, updated_at 
+	query := `SELECT id, user_id, title, slug, category_id, product_id, is_breaking, content, created_at, updated_at 
               FROM scripts WHERE user_id = $1 LIMIT 1`
 
 	var script models.Script
 	err := r.db.QueryRow(ctx, query, userID).Scan(
 		&script.ID, &script.UserID, &script.Title, &script.Slug,
-		&script.CategoryID, &script.IsBreaking, &script.Content,
+		&script.CategoryID, &script.ProductID, &script.IsBreaking, &script.Content,
 		&script.CreatedAt, &script.UpdatedAt,
 	)
 
@@ -179,13 +185,22 @@ func (r *ScriptRepository) UpsertMyScript(ctx context.Context, userID int64, con
 	// Catatan: Kita asumsikan category_id = 1 untuk "Script Agent Utama".
 	// Pastikan di tabel `categories` database Anda sudah ada data dengan id 1.
 
-	query := `
+	// Cek apakah sudah ada script agent untuk user ini
+	var exists bool
+	err := r.db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM scripts WHERE user_id = $1 AND category_id = 1)", userID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = r.db.Exec(ctx, "UPDATE scripts SET content = $1, updated_at = NOW() WHERE user_id = $2 AND category_id = 1", content, userID)
+		return err
+	}
+
+	_, err = r.db.Exec(ctx, `
 		INSERT INTO scripts (user_id, title, slug, category_id, is_breaking, content, created_at, updated_at)
 		VALUES ($1, 'My Agent Script', 'my-script-' || $1, 1, false, $2, NOW(), NOW())
-		ON CONFLICT (user_id, category_id) 
-		DO UPDATE SET content = EXCLUDED.content, updated_at = NOW()
-	`
-
-	_, err := r.db.Exec(ctx, query, userID, content)
+	`, userID, content)
+	
 	return err
 }

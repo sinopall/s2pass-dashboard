@@ -11,6 +11,7 @@ type Script struct {
 	Title      string          `json:"title"`
 	Slug       string          `json:"slug"`
 	CategoryID int64           `json:"category_id"`
+	ProductID  *int64          `json:"product_id,omitempty"`
 	IsBreaking bool            `json:"is_breaking"`
 	Content    json.RawMessage `json:"content"`
 	CreatedAt  time.Time       `json:"created_at"`

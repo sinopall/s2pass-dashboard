@@ -9,4 +9,5 @@ export interface Product {
 }
 
 export interface Script extends Product {
+  id: number;
 }

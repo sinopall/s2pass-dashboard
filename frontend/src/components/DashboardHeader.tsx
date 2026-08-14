@@ -1,36 +1,14 @@
-import { RefObject } from "react";
 import Button from "./ui/button/Button";
-import { KnowledgeItem } from "../types/home.types";
+
 import { IconPhone } from "./Icons";
-import GlobalSearchBox from "./GlobalSearchBox";
 
 interface Props {
   savedName: string;
-  searchBoxRef: RefObject<HTMLDivElement | null>;
-  globalQ: string;
-  setGlobalQ: (v: string) => void;
-  searchOpen: boolean;
-  setSearchOpen: (v: boolean) => void;
-  searchLoading: boolean;
-  searchItems: KnowledgeItem[];
-  onBeforeNavigate: () => void;
   onBack: () => void;
   onReset: () => void;
 }
 
-export default function DashboardHeader({
-  savedName,
-  searchBoxRef,
-  globalQ,
-  setGlobalQ,
-  searchOpen,
-  setSearchOpen,
-  searchLoading,
-  searchItems,
-  onBeforeNavigate,
-  onBack,
-  onReset,
-}: Props) {
+export default function DashboardHeader({ savedName, onBack, onReset }: Props) {
   return (
     <div className="sticky top-0 z-40 rounded-2xl border border-stroke bg-white/90 p-4 shadow-sm backdrop-blur dark:border-strokedark dark:bg-boxdark/85">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -59,19 +37,8 @@ export default function DashboardHeader({
           </div>
         </div>
 
-        {/* SEARCH GLOBAL + reset + back universal */}
+        {/* reset + back universal */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <GlobalSearchBox
-            searchBoxRef={searchBoxRef}
-            globalQ={globalQ}
-            setGlobalQ={setGlobalQ}
-            searchOpen={searchOpen}
-            setSearchOpen={setSearchOpen}
-            searchLoading={searchLoading}
-            searchItems={searchItems}
-            onBeforeNavigate={onBeforeNavigate}
-          />
-
           {/* 1 tombol back universal */}
           <Button
             variant="outline"

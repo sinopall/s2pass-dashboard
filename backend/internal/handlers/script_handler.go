@@ -30,7 +30,7 @@ func (h *ScriptHandler) Create(c *gin.Context) {
 	authUser, _ := c.Get(middlewares.CtxUserKey)
 	user := authUser.(middlewares.AuthUser)
 
-	script, err := h.svc.Create(c.Request.Context(), user.ID, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
+	script, err := h.svc.Create(c.Request.Context(), user.ID, req.Title, req.Slug, req.CategoryID, req.ProductID, req.IsBreaking, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -42,7 +42,7 @@ func (h *ScriptHandler) List(c *gin.Context) {
 	var q dto.ScriptListQuery
 	_ = c.ShouldBindQuery(&q)
 
-	items, total, err := h.svc.List(c.Request.Context(), q.Q, q.CategoryID, q.Page, q.Limit)
+	items, total, err := h.svc.List(c.Request.Context(), q.Q, q.CategoryID, q.ProductID, q.Page, q.Limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -90,7 +90,7 @@ func (h *ScriptHandler) Update(c *gin.Context) {
 		return
 	}
 
-	script, err := h.svc.Update(c.Request.Context(), id, req.Title, req.Slug, req.CategoryID, req.IsBreaking, req.Content)
+	script, err := h.svc.Update(c.Request.Context(), id, req.Title, req.Slug, req.CategoryID, req.ProductID, req.IsBreaking, req.Content)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

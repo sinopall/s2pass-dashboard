@@ -4,16 +4,16 @@ import axios from "../../../api/axios";
 import API from "../../../api/api";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { toast } from "react-toastify";
-import ContentForm, {
-  ContentFormValues,
-} from "../../../components/form/ContentForm";
+import ProductForm, {
+  ProductFormValues,
+} from "../../../components/form/ProductForm";
 
 export default function CreateProduct() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
 
-  const [initialData, setInitialData] = useState<ContentFormValues | undefined>(
+  const [initialData, setInitialData] = useState<ProductFormValues | undefined>(
     undefined,
   );
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export default function CreateProduct() {
   }, [isEditMode, id, navigate]);
 
   // --- 2. HANDLER SIMPAN ---
-  const handleSave = async (data: ContentFormValues) => {
+  const handleSave = async (data: ProductFormValues) => {
     setIsSubmitting(true);
 
     // Validasi Manual untuk Kategori
@@ -112,7 +112,7 @@ export default function CreateProduct() {
       />
 
       {/* Panggil ContentForm */}
-      <ContentForm
+      <ProductForm
         initialValues={initialData}
         onSubmit={handleSave}
         isSubmitting={isSubmitting}

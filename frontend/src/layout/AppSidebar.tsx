@@ -67,7 +67,6 @@ const navItems: NavItem[] = [
         pro: false,
       },
     ],
-    allowedRoles: ["admin"],
   },
 
   // ✅ TAMBAH MENU WARNING

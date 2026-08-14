@@ -27,17 +27,18 @@ interface CategoryTableItemProps {
   // ==== BARU: dipakai untuk fitur "search produk -> auto expand + highlight" ====
   // Set berisi id kategori (root..leaf) yang harus di-force-expand.
   expandIds?: Set<number> | null;
-  // id produk yang sedang jadi target highlight + auto-scroll.
-  highlightProductId?: number | null;
+  // target highlight (id dan jenisnya)
+  highlightTarget?: { id: number; kind: "product" | "script" } | null;
   // berubah tiap kali user pilih hasil search baru, dipakai supaya effect
   // scroll tetap ke-trigger walau id target sama seperti sebelumnya.
   highlightNonce?: number;
 }
 
-interface ProductMini {
+interface LeafItemMini {
   id: number;
   title: string;
-  is_active: boolean;
+  kind: "product" | "script";
+  is_active?: boolean;
 }
 
 // Icon mata inline — supaya tidak bergantung ke barrel icon yang belum tentu
@@ -72,7 +73,7 @@ export default function CategoryTableItem({
   ancestors = [],
   isAdmin,
   expandIds = null,
-  highlightProductId = null,
+  highlightTarget = null,
   highlightNonce = 0,
 }: CategoryTableItemProps) {
   const navigate = useNavigate();
@@ -80,11 +81,11 @@ export default function CategoryTableItem({
   const hasChildren = category.children && category.children.length > 0;
   const isLeaf = !hasChildren;
 
-  // Khusus leaf category: daftar produk yang masuk ke kategori ini.
+  // Khusus leaf category: daftar produk + script yang masuk ke kategori ini.
   // null = belum pernah di-fetch, [] = sudah di-fetch tapi kosong.
-  const [products, setProducts] = useState<ProductMini[] | null>(null);
-  const [productsLoading, setProductsLoading] = useState(false);
-  const productRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const [items, setItems] = useState<LeafItemMini[] | null>(null);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const paddingLeft = level * 24;
   const currentType = rootType || category.name;
@@ -102,18 +103,44 @@ export default function CategoryTableItem({
     onDelete(category);
   };
 
-  const loadProducts = async () => {
-    setProductsLoading(true);
+  // Fetch produk & script sekaligus (paralel) untuk kategori leaf ini,
+  // lalu digabung jadi satu list dengan penanda "kind" biar bisa dibedakan.
+  const loadLeafItems = async () => {
+    setItemsLoading(true);
     try {
-      const res = await axios.get(API.products.list, {
-        params: { categoryId: category.id, page: 1, limit: 50 },
-      });
-      setProducts(res.data?.items || []);
+      const [productsRes, scriptsRes] = await Promise.all([
+        axios.get(API.products.list, {
+          params: { categoryId: category.id, page: 1, limit: 50 },
+        }),
+        axios.get(API.scripts.list, {
+          params: { categoryId: category.id, page: 1, limit: 50 },
+        }),
+      ]);
+
+      const products: LeafItemMini[] = (productsRes.data?.items || []).map(
+        (p: any) => ({
+          id: p.id,
+          title: p.title,
+          kind: "product" as const,
+          is_active: p.is_active,
+        }),
+      );
+
+      const scripts: LeafItemMini[] = (scriptsRes.data?.items || []).map(
+        (s: any) => ({
+          id: s.id,
+          title: s.title,
+          kind: "script" as const,
+          is_active: s.is_active, // dibiarkan undefined kalau backend script belum punya kolom ini
+        }),
+      );
+
+      setItems([...products, ...scripts]);
     } catch (err) {
-      console.error("Gagal load produk kategori:", err);
-      setProducts([]);
+      console.error("Gagal load produk/script kategori:", err);
+      setItems([]);
     } finally {
-      setProductsLoading(false);
+      setItemsLoading(false);
     }
   };
 
@@ -121,9 +148,9 @@ export default function CategoryTableItem({
     const next = !isExpanded;
     setIsExpanded(next);
 
-    // Lazy-load: fetch produk cuma sekali, pas pertama kali leaf dibuka
-    if (isLeaf && next && products === null) {
-      loadProducts();
+    // Lazy-load: fetch cuma sekali, pas pertama kali leaf dibuka
+    if (isLeaf && next && items === null) {
+      loadLeafItems();
     }
   };
 
@@ -135,23 +162,26 @@ export default function CategoryTableItem({
 
     setIsExpanded(true);
 
-    // Kalau ini leaf target-nya, pastikan produk ikut ke-load juga
-    if (isLeaf && products === null) {
-      loadProducts();
+    // Kalau ini leaf target-nya, pastikan produk/script ikut ke-load juga
+    if (isLeaf && items === null) {
+      loadLeafItems();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandIds, highlightNonce]);
 
-  // ==== BARU: auto-scroll ke produk yang di-highlight, begitu daftar produk siap ====
+  // ==== BARU: auto-scroll ke produk/script yang di-highlight, begitu list siap ====
   useEffect(() => {
-    if (!highlightProductId || !products) return;
-    const match = products.find((p) => p.id === highlightProductId);
+    if (!highlightTarget || !items) return;
+    const match = items.find(
+      (it) => it.kind === highlightTarget.kind && it.id === highlightTarget.id,
+    );
     if (!match) return;
 
-    const el = productRefs.current[highlightProductId];
+    const el =
+      itemRefs.current[`${highlightTarget.kind}-${highlightTarget.id}`];
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, highlightProductId, highlightNonce]);
+  }, [items, highlightTarget, highlightNonce]);
 
   return (
     <>
@@ -167,7 +197,9 @@ export default function CategoryTableItem({
                 className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-meta-4 transition-transform ${
                   isExpanded ? "rotate-180" : ""
                 }`}
-                title={isLeaf ? "Lihat produk di kategori ini" : undefined}
+                title={
+                  isLeaf ? "Lihat produk & script di kategori ini" : undefined
+                }
               >
                 <ChevronDownIcon className="w-4 h-4 fill-current text-gray-500" />
               </button>
@@ -261,29 +293,32 @@ export default function CategoryTableItem({
             ancestors={[...ancestors, category]}
             isAdmin={isAdmin}
             expandIds={expandIds}
-            highlightProductId={highlightProductId}
+            highlightTarget={highlightTarget}
             highlightNonce={highlightNonce}
           />
         ))}
 
-      {/* Expand -> daftar produk (kalau leaf category) */}
+      {/* Expand -> daftar produk & script (kalau leaf category) */}
       {isExpanded && isLeaf && (
         <tr className="border-b border-stroke dark:border-strokedark bg-gray-50/60 dark:bg-boxdark-2/60">
           <td colSpan={3} className="py-3 px-4">
             <div style={{ paddingLeft: `${paddingLeft + 32}px` }}>
-              {productsLoading ? (
-                <div className="text-xs text-gray-400 py-2">
-                  Memuat produk...
-                </div>
-              ) : products && products.length > 0 ? (
+              {itemsLoading ? (
+                <div className="text-xs text-gray-400 py-2">Memuat data...</div>
+              ) : items && items.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {products.map((p) => {
-                    const isHighlighted = p.id === highlightProductId;
+                  {items.map((it) => {
+                    const isHighlighted =
+                      highlightTarget &&
+                      it.kind === highlightTarget.kind &&
+                      it.id === highlightTarget.id;
+                    const isScript = it.kind === "script";
+
                     return (
                       <div
-                        key={p.id}
+                        key={`${it.kind}-${it.id}`}
                         ref={(el) => {
-                          productRefs.current[p.id] = el;
+                          itemRefs.current[`${it.kind}-${it.id}`] = el;
                         }}
                         className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-all ${
                           isHighlighted
@@ -292,26 +327,50 @@ export default function CategoryTableItem({
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-                            {p.title}
-                          </span>
+                          {/* Badge jenis: Produk vs Script */}
                           <span
-                            className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                              p.is_active
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-gray-100 text-gray-400"
+                            className={`shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                              isScript
+                                ? "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
                             }`}
                           >
-                            {p.is_active ? "Aktif" : "Nonaktif"}
+                            {isScript ? "Script" : "Produk"}
                           </span>
+
+                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                            {it.title}
+                          </span>
+
+                          {/* Status aktif/nonaktif -- cuma ditampilkan kalau field-nya ada
+                              (script mungkin belum punya kolom is_active di backend) */}
+                          {typeof it.is_active === "boolean" && (
+                            <span
+                              className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                it.is_active
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-gray-100 text-gray-400"
+                              }`}
+                            >
+                              {it.is_active ? "Aktif" : "Nonaktif"}
+                            </span>
+                          )}
                         </div>
 
                         <button
                           onClick={() =>
-                            navigate(`/products/view/${p.id}`)
+                            navigate(
+                              isScript
+                                ? `/scripts/view/${it.id}`
+                                : `/products/view/${it.id}`,
+                            )
                           }
                           className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-meta-4 transition-colors"
-                          title="Lihat detail produk"
+                          title={
+                            isScript
+                              ? "Lihat detail script"
+                              : "Lihat detail produk"
+                          }
                         >
                           <EyeIcon />
                         </button>
@@ -321,7 +380,7 @@ export default function CategoryTableItem({
                 </div>
               ) : (
                 <div className="text-xs text-gray-400 py-2">
-                  Belum ada produk di kategori ini.
+                  Belum ada produk atau script di kategori ini.
                 </div>
               )}
             </div>

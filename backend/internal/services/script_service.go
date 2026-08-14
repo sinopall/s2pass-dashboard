@@ -34,7 +34,7 @@ func slugifyScript(s string) string {
 	return s
 }
 
-func (s *ScriptService) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (s *ScriptService) Create(ctx context.Context, userID int64, title, slug string, categoryID int64, productID *int64, isBreaking bool, content any) (models.Script, error) {
 	// 1. Validasi Kategori
 	ok, err := s.repo.CategoryExists(ctx, categoryID)
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *ScriptService) Create(ctx context.Context, userID int64, title, slug st
 	}
 
 	// 3. Simpan ke Repo
-	return s.repo.Create(ctx, userID, title, finalSlug, categoryID, isBreaking, content)
+	return s.repo.Create(ctx, userID, title, finalSlug, categoryID, productID, isBreaking, content)
 }
 
 // Logic Slug (Sama persis dengan Product, tapi cek ke ScriptRepo)
@@ -90,11 +90,11 @@ func (s *ScriptService) GetByID(ctx context.Context, id int64) (models.Script, e
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *ScriptService) List(ctx context.Context, q string, categoryID int64, page, limit int) ([]models.Script, int, error) {
-	return s.repo.List(ctx, q, categoryID, page, limit)
+func (s *ScriptService) List(ctx context.Context, q string, categoryID int64, productID int64, page, limit int) ([]models.Script, int, error) {
+	return s.repo.List(ctx, q, categoryID, productID, page, limit)
 }
 
-func (s *ScriptService) Update(ctx context.Context, id int64, title, slug string, categoryID int64, isBreaking bool, content any) (models.Script, error) {
+func (s *ScriptService) Update(ctx context.Context, id int64, title, slug string, categoryID int64, productID *int64, isBreaking bool, content any) (models.Script, error) {
 	// 1. Validasi Kategori
 	ok, err := s.repo.CategoryExists(ctx, categoryID)
 	if err != nil {
@@ -116,7 +116,7 @@ func (s *ScriptService) Update(ctx context.Context, id int64, title, slug string
 	}
 
 	// 4. Update ke Database
-	return s.repo.Update(ctx, id, title, finalSlug, categoryID, isBreaking, content)
+	return s.repo.Update(ctx, id, title, finalSlug, categoryID, productID, isBreaking, content)
 }
 
 func (s *ScriptService) Delete(ctx context.Context, id int64) error {

@@ -59,6 +59,10 @@ export default function App() {
                 path="/scripts/view/:id"
                 element={<ScriptDetail />}
               />
+              <Route
+                path="/scripts"
+                element={<ScriptList />}
+              />
 
               {/* ✅ WARNING PAGE */}
               <Route path="/warning" element={<WarningPage />} />
@@ -80,10 +84,6 @@ export default function App() {
                   element={<CreateProduct />}
                 />
 
-                <Route
-                  path="/scripts"
-                  element={<ScriptList />}
-                />
                 <Route
                   path="/scripts/create"
                   element={<CreateScript />}

@@ -108,14 +108,14 @@ export default function BreakingNewsTicker() {
              - Kolom 1 (Label): Lebar otomatis sesuai konten ("auto")
              - Kolom 2 (Marquee): Ambil sisa ruang, TAPI bisa mengecil sampai 0 ("minmax(0, 1fr)") 
       */}
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-4 py-2">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-4 py-3">
         {/* Kolom 1: Label Breaking */}
-        <span className="shrink-0 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white z-10">
+        <span className="shrink-0 rounded-full bg-red-600 px-3 py-1.5 text-xs font-bold text-white z-10">
           BREAKING
         </span>
 
         {/* Kolom 2: Container Marquee */}
-        <div className="relative overflow-hidden h-full flex items-center">
+        <div className="relative overflow-hidden py-1 flex items-center">
           {/* Masking Gradient (Opsional: agar teks terlihat memudar di ujung kiri/kanan) */}
           <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
           <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-red-50 to-transparent dark:from-gray-900 z-10 pointer-events-none"></div>
@@ -127,7 +127,7 @@ export default function BreakingNewsTicker() {
                 key={`${it.type}-${it.id}-${idx}-1`}
                 type="button"
                 onClick={() => goDetail(it)}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm ring-1 ring-red-200 hover:bg-red-50 dark:bg-gray-900 dark:text-gray-100 dark:ring-red-900/40 dark:hover:bg-gray-800 transition-colors mx-1.5"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm ring-1 ring-red-200 hover:bg-red-50 dark:bg-gray-900 dark:text-gray-100 dark:ring-red-900/40 dark:hover:bg-gray-800 transition-colors mx-1.5"
                 title={`Buka ${it.type}: ${it.title}`}
               >
                 <span className="text-[10px] font-bold text-red-600 uppercase">
